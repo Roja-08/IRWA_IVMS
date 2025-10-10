@@ -5,6 +5,7 @@ const VolunteerList = () => {
     const [volunteers, setVolunteers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [selectedVolunteer, setSelectedVolunteer] = useState(null);
 
     const fetchVolunteers = async () => {
         setLoading(true);
@@ -118,20 +119,24 @@ const VolunteerList = () => {
                         {volunteers.map((volunteer) => (
                             <div
                                 key={volunteer._id}
+                                onClick={() => setSelectedVolunteer(volunteer)}
                                 style={{
                                     border: '1px solid #e2e8f0',
                                     borderRadius: '12px',
                                     padding: '20px',
                                     backgroundColor: '#f8fafc',
                                     boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-                                    transition: 'transform 0.2s ease',
+                                    transition: 'all 0.2s ease',
+                                    cursor: 'pointer'
                                 }}
-                                onMouseEnter={(e) =>
-                                    (e.currentTarget.style.transform = 'translateY(-3px)')
-                                }
-                                onMouseLeave={(e) =>
-                                    (e.currentTarget.style.transform = 'translateY(0)')
-                                }
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(-3px)';
+                                    e.currentTarget.style.borderColor = '#3b82f6';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.borderColor = '#e2e8f0';
+                                }}
                             >
                                 <div
                                     style={{
@@ -169,12 +174,16 @@ const VolunteerList = () => {
                                             <strong>Created:</strong>{' '}
                                             {new Date(volunteer.created_at).toLocaleString()}
                                         </p>
+                                        <div style={{ marginTop: '10px', fontSize: '12px', color: '#3b82f6', fontWeight: '500' }}>
+                                            Click to view full details →
+                                        </div>
                                     </div>
 
                                     <div style={{ textAlign: 'center', minWidth: '120px' }}>
                                         <div
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(volunteer._id);
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigator.clipboard.writeText(volunteer.volunteer_id || volunteer._id);
                                                 alert('Profile ID copied to clipboard!');
                                             }}
                                             style={{
@@ -201,7 +210,7 @@ const VolunteerList = () => {
                                             📋 Copy ID
                                         </div>
                                         <small style={{ color: '#64748b', fontSize: '11px', display: 'block', marginTop: '4px' }}>
-                                            {volunteer._id.substring(0, 8)}...
+                                            {volunteer.volunteer_id || volunteer._id.substring(0, 8) + '...'}
                                         </small>
                                     </div>
                                 </div>
@@ -279,6 +288,155 @@ const VolunteerList = () => {
                     <p style={{ margin: 0 }}>
                         Upload some CVs first to view data here.
                     </p>
+                </div>
+            )}
+
+            {/* Volunteer Details Modal */}
+            {selectedVolunteer && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '16px',
+                        maxWidth: '800px',
+                        width: '100%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                    }}>
+                        <div style={{
+                            padding: '24px',
+                            borderBottom: '1px solid #e2e8f0',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <h2 style={{ margin: 0, fontSize: '24px', color: '#0f172a' }}>
+                                {selectedVolunteer.name}
+                            </h2>
+                            <button
+                                onClick={() => setSelectedVolunteer(null)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#64748b',
+                                    padding: '4px'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div style={{ padding: '24px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+                                <div>
+                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Contact Information</h3>
+                                    <div style={{ space: '8px' }}>
+                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Email:</strong> {selectedVolunteer.email}</p>
+                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Phone:</strong> {selectedVolunteer.phone || 'Not provided'}</p>
+                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Location:</strong> {selectedVolunteer.location || 'Not specified'}</p>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Profile Information</h3>
+                                    <div>
+                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Profile ID:</strong> {selectedVolunteer.volunteer_id || selectedVolunteer._id}</p>
+                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>CV File:</strong> {selectedVolunteer.cv_filename || 'Not uploaded'}</p>
+                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Created:</strong> {new Date(selectedVolunteer.created_at).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {selectedVolunteer.experience_summary && (
+                                <div style={{ marginBottom: '24px' }}>
+                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Experience Summary</h3>
+                                    <p style={{ color: '#475569', lineHeight: '1.6' }}>{selectedVolunteer.experience_summary}</p>
+                                </div>
+                            )}
+                            
+                            {selectedVolunteer.skills && selectedVolunteer.skills.length > 0 && (
+                                <div style={{ marginBottom: '24px' }}>
+                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Skills ({selectedVolunteer.skills.length})</h3>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        {selectedVolunteer.skills.map((skill, idx) => (
+                                            <span
+                                                key={idx}
+                                                style={{
+                                                    backgroundColor: '#e0f2fe',
+                                                    padding: '8px 12px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '14px',
+                                                    color: '#0369a1',
+                                                    fontWeight: '500'
+                                                }}
+                                            >
+                                                {skill.name} ({skill.level})
+                                                {skill.years_experience && ` - ${skill.years_experience} years`}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {selectedVolunteer.interests && selectedVolunteer.interests.length > 0 && (
+                                <div style={{ marginBottom: '24px' }}>
+                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Interests</h3>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        {selectedVolunteer.interests.map((interest, idx) => (
+                                            <span
+                                                key={idx}
+                                                style={{
+                                                    backgroundColor: '#f0fdf4',
+                                                    padding: '6px 12px',
+                                                    borderRadius: '16px',
+                                                    fontSize: '14px',
+                                                    color: '#166534',
+                                                    border: '1px solid #bbf7d0'
+                                                }}
+                                            >
+                                                {interest}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {selectedVolunteer.availability && selectedVolunteer.availability.length > 0 && (
+                                <div>
+                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Availability</h3>
+                                    <div style={{ display: 'grid', gap: '8px' }}>
+                                        {selectedVolunteer.availability.map((slot, idx) => {
+                                            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                                            return (
+                                                <div key={idx} style={{
+                                                    padding: '12px',
+                                                    backgroundColor: slot.status === 'available' ? '#f0fdf4' : '#fef3c7',
+                                                    borderRadius: '8px',
+                                                    border: `1px solid ${slot.status === 'available' ? '#bbf7d0' : '#fde68a'}`
+                                                }}>
+                                                    <span style={{ fontWeight: '500' }}>{days[slot.day_of_week]}:</span> {slot.start_time} - {slot.end_time} ({slot.status})
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

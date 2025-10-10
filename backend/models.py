@@ -4,6 +4,9 @@ from typing import Optional, List, Any, Dict
 from datetime import datetime, date
 from bson import ObjectId
 from enum import Enum
+import uuid
+import random
+import string
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -67,8 +70,13 @@ class Availability(BaseModel):
     end_time: str    # HH:MM format
     status: AvailabilityStatus = AvailabilityStatus.AVAILABLE
 
+def generate_volunteer_id() -> str:
+    """Generate a unique volunteer ID in format VOL-XXXXXXXX"""
+    return f"VOL-{''.join(random.choices(string.ascii_uppercase + string.digits, k=8))}"
+
 class VolunteerProfile(BaseModel):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    volunteer_id: str = Field(default_factory=generate_volunteer_id)
     name: str
     email: str
     phone: Optional[str] = None

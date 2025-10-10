@@ -278,7 +278,7 @@ async def get_all_volunteers():
         
         cursor = db.volunteer_profiles.find({}, {
             "name": 1, "email": 1, "location": 1, 
-            "skills": 1, "created_at": 1, "cv_filename": 1
+            "skills": 1, "created_at": 1, "cv_filename": 1, "volunteer_id": 1
         })
         profiles = await cursor.to_list(length=100)
         

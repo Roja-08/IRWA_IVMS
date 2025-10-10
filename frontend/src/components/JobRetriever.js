@@ -9,6 +9,7 @@ const JobRetriever = () => {
   const [error, setError] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [jobsCount, setJobsCount] = useState(0);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   const retrieveJobs = async () => {
     setLoading(true);
@@ -141,43 +142,117 @@ const JobRetriever = () => {
               {jobs.map((job, index) => (
                 <div
                   key={job._id || index}
-                  className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-shadow"
+                  onClick={() => setSelectedJob(job)}
+                  className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer hover:border-blue-300"
                 >
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
                     {job.title || "Untitled Position"}
                   </h4>
                   <p className="text-sm text-gray-600 mb-1">
                     <strong>Organization:</strong> {job.organization || "Not specified"}
                   </p>
-                  <p className="text-sm text-gray-600 mb-1">
+                  <p className="text-sm text-gray-600 mb-2">
                     <strong>Location:</strong> {job.location || "Not specified"}
                   </p>
-                  <p className="text-sm text-gray-600 mb-2">
-                    <strong>Description:</strong>{" "}
-                    {job.description
-                      ? job.description.substring(0, 120) + "..."
-                      : "No description"}
+                  <p className="text-sm text-gray-600 mb-3">
+                    {job.description ? job.description.substring(0, 100) + "..." : "No description"}
                   </p>
-                  {job.skills_required?.length > 0 && (
-                    <p className="text-sm text-gray-700 mb-1">
-                      <strong>Skills:</strong>{" "}
-                      <span className="text-gray-800">
-                        {job.skills_required.join(", ")}
-                      </span>
-                    </p>
-                  )}
-                  <div className="text-xs text-gray-500 mt-2">
-                    <p><strong>Source:</strong> {job.source}</p>
-                    <p>
-                      <strong>Created:</strong>{" "}
-                      {job.created_at
-                        ? new Date(job.created_at).toLocaleDateString()
-                        : "Unknown"}
-                    </p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-blue-600 font-medium">Click to view details →</span>
+                    <span className="text-xs text-gray-500">
+                      {job.skills_required?.length || 0} skills required
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Job Details Modal */}
+            {selectedJob && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex justify-between items-start">
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        {selectedJob.title || "Untitled Position"}
+                      </h2>
+                      <button
+                        onClick={() => setSelectedJob(null)}
+                        className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 space-y-4">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Basic Information</h3>
+                        <div className="space-y-2 text-sm">
+                          <p><strong>Organization:</strong> {selectedJob.organization || "Not specified"}</p>
+                          <p><strong>Location:</strong> {selectedJob.location || "Not specified"}</p>
+                          {selectedJob.time_commitment && (
+                            <p><strong>Time Commitment:</strong> {selectedJob.time_commitment}</p>
+                          )}
+                          {selectedJob.start_date && (
+                            <p><strong>Start Date:</strong> {new Date(selectedJob.start_date).toLocaleDateString()}</p>
+                          )}
+                          {selectedJob.end_date && (
+                            <p><strong>End Date:</strong> {new Date(selectedJob.end_date).toLocaleDateString()}</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Contact Information</h3>
+                        <div className="space-y-2 text-sm">
+                          {selectedJob.contact_email && (
+                            <p><strong>Email:</strong> {selectedJob.contact_email}</p>
+                          )}
+                          {selectedJob.contact_phone && (
+                            <p><strong>Phone:</strong> {selectedJob.contact_phone}</p>
+                          )}
+                          {selectedJob.website && (
+                            <p><strong>Website:</strong> <a href={selectedJob.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{selectedJob.website}</a></p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {selectedJob.description && (
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
+                        <p className="text-gray-700 leading-relaxed">{selectedJob.description}</p>
+                      </div>
+                    )}
+                    
+                    {selectedJob.skills_required?.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-2">Required Skills</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedJob.skills_required.map((skill, idx) => (
+                            <span key={idx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="border-t pt-4 mt-6">
+                      <h3 className="font-semibold text-gray-900 mb-2">Additional Information</h3>
+                      <div className="grid md:grid-cols-2 gap-4 text-xs text-gray-500">
+                        <p><strong>Source:</strong> {selectedJob.source}</p>
+                        <p><strong>External ID:</strong> {selectedJob.external_id || 'N/A'}</p>
+                        <p><strong>Created:</strong> {selectedJob.created_at ? new Date(selectedJob.created_at).toLocaleDateString() : "Unknown"}</p>
+                        <p><strong>Updated:</strong> {selectedJob.updated_at ? new Date(selectedJob.updated_at).toLocaleDateString() : "Unknown"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

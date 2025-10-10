@@ -21,10 +21,7 @@ class AvailabilityTrackerAgent(BaseAgent):
             await self._ensure_db_connection()
             self.log_info(f"Processing availability for volunteer {volunteer_id}")
             
-            # Convert to ObjectId if string
-            from bson import ObjectId
-            if isinstance(volunteer_id, str):
-                volunteer_id = ObjectId(volunteer_id)
+            # volunteer_id is already a string, no conversion needed
             
             # Validate and convert availability data
             validated_availability = []
@@ -35,7 +32,7 @@ class AvailabilityTrackerAgent(BaseAgent):
             
             # Update volunteer profile with new availability
             result = await self.db.volunteer_profiles.update_one(
-                {"_id": volunteer_id},
+                {"volunteer_id": volunteer_id},
                 {"$set": {"availability": [av.dict() for av in validated_availability]}}
             )
             
@@ -111,13 +108,10 @@ class AvailabilityTrackerAgent(BaseAgent):
         try:
             await self._ensure_db_connection()
             
-            # Convert to ObjectId if string
-            from bson import ObjectId
-            if isinstance(volunteer_id, str):
-                volunteer_id = ObjectId(volunteer_id)
+            # volunteer_id is already a string, no conversion needed
             
             volunteer = await self.db.volunteer_profiles.find_one(
-                {"_id": volunteer_id},
+                {"volunteer_id": volunteer_id},
                 {"availability": 1}
             )
             

@@ -21,13 +21,10 @@ class EventMatcherAgent(BaseAgent):
             await self._ensure_db_connection()
             self.log_info(f"Finding matches for volunteer {volunteer_id}")
             
-            # Convert to ObjectId if string
-            from bson import ObjectId
-            if isinstance(volunteer_id, str):
-                volunteer_id = ObjectId(volunteer_id)
+            # volunteer_id is already a string, no conversion needed
             
-            # Get volunteer profile
-            volunteer = await self.db.volunteer_profiles.find_one({"_id": volunteer_id})
+            # Get volunteer profile by volunteer_id
+            volunteer = await self.db.volunteer_profiles.find_one({"volunteer_id": volunteer_id})
             if not volunteer:
                 return {"matches": [], "total": 0}
             

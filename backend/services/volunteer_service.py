@@ -44,11 +44,14 @@ class VolunteerService:
             result = await self.db.volunteer_profiles.insert_one(profile.dict(by_alias=True))
             
             if result.inserted_id:
-                logger.info(f"Created profile with ID: {result.inserted_id}")
+                # Get the generated volunteer_id from the profile
+                created_profile = await self.db.volunteer_profiles.find_one({"_id": result.inserted_id})
+                volunteer_id = created_profile.get('volunteer_id')
+                logger.info(f"Created profile with ID: {volunteer_id}")
                 return {
                     "success": True,
                     "message": "Profile created successfully",
-                    "profile_id": str(result.inserted_id)
+                    "profile_id": volunteer_id
                 }
             else:
                 return {
@@ -96,11 +99,11 @@ class VolunteerService:
             }
     
     async def get_profile(self, profile_id: str) -> Optional[Dict[str, Any]]:
-        """Get volunteer profile by ID"""
+        """Get volunteer profile by volunteer_id"""
         try:
             await self._ensure_db_connection()
             
-            profile = await self.db.volunteer_profiles.find_one({"_id": ObjectId(profile_id)})
+            profile = await self.db.volunteer_profiles.find_one({"volunteer_id": profile_id})
             
             if profile:
                 profile['_id'] = str(profile['_id'])
@@ -117,7 +120,7 @@ class VolunteerService:
         try:
             logger.info(f"Finding matches for volunteer {profile_id}")
             
-            # Use event matcher agent
+            # Use event matcher agent  
             matches = await self.event_matcher.process(profile_id)
             
             return {
