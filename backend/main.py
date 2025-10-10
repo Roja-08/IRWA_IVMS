@@ -373,6 +373,21 @@ async def get_job_matches(profile_id: str):
         logger.error(f"Error finding matches: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/volunteers/{profile_id}")
+async def delete_volunteer_profile(profile_id: str):
+    """Delete volunteer profile"""
+    try:
+        result = await volunteer_service.delete_profile(profile_id)
+        
+        if result['success']:
+            return result
+        else:
+            raise HTTPException(status_code=404, detail=result['message'])
+            
+    except Exception as e:
+        logger.error(f"Error deleting profile: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/volunteers")
 async def search_volunteers(
     skills: str = None,

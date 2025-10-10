@@ -7,82 +7,66 @@ import VolunteerList from './components/VolunteerList';
 function App() {
   const [activeTab, setActiveTab] = useState('jobs');
 
-  const tabStyle = {
-    padding: '10px 20px',
-    margin: '0 5px',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    backgroundColor: '#f8f9fa',
-    color: '#333'
-  };
-
-  const activeTabStyle = {
-    ...tabStyle,
-    backgroundColor: '#007bff',
-    color: 'white'
-  };
+  const tabs = [
+    { id: 'jobs', label: 'Job Management' },
+    { id: 'upload', label: 'Upload CV' },
+    { id: 'matcher', label: 'AI Job Matcher' },
+    { id: 'verify', label: 'Verify Database' }
+  ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-      <header style={{
-        backgroundColor: '#343a40',
-        color: 'white',
-        padding: '20px 0',
-        textAlign: 'center'
-      }}>
-        <h1>Intelligent Volunteer Matching System</h1>
-        <p>Multi-Agent AI System for Volunteer-Job Matching</p>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-8 text-center shadow-md">
+        <h1 className="text-4xl font-extrabold tracking-wide mb-2 drop-shadow-sm">
+          SkillMatrix
+        </h1>
+        <p className="text-lg opacity-90">
+          Multi-Agent AI System for Volunteer-Job Matching
+        </p>
       </header>
 
-      <nav style={{
-        backgroundColor: 'white',
-        padding: '15px',
-        textAlign: 'center',
-        borderBottom: '1px solid #dee2e6'
-      }}>
-        <button
-          style={activeTab === 'jobs' ? activeTabStyle : tabStyle}
-          onClick={() => setActiveTab('jobs')}
-        >
-          Job Management
-        </button>
-        <button
-          style={activeTab === 'upload' ? activeTabStyle : tabStyle}
-          onClick={() => setActiveTab('upload')}
-        >
-          Upload CV
-        </button>
-        <button
-          style={activeTab === 'matcher' ? activeTabStyle : tabStyle}
-          onClick={() => setActiveTab('matcher')}
-        >
-          AI Job Matcher
-        </button>
-        <button
-          style={activeTab === 'verify' ? activeTabStyle : tabStyle}
-          onClick={() => setActiveTab('verify')}
-        >
-          Verify Database
-        </button>
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-b border-gray-200">
+        <div className="flex justify-center space-x-4 py-3">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative px-5 py-2 font-medium transition-all duration-300 rounded-md
+                ${
+                  activeTab === tab.id
+                    ? 'text-white bg-blue-600 shadow-md scale-105'
+                    : 'text-gray-700 hover:bg-blue-50'
+                }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-400 rounded-full"></span>
+              )}
+            </button>
+          ))}
+        </div>
       </nav>
 
-      <main style={{ padding: '20px' }}>
-        {activeTab === 'jobs' && <JobRetriever />}
-        {activeTab === 'upload' && <CVUpload />}
-        {activeTab === 'matcher' && <JobMatcher />}
-        {activeTab === 'verify' && <VolunteerList />}
+      {/* Main Content */}
+      <main className="flex-1 px-6 py-10">
+        <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-8 transition-all duration-300 hover:shadow-xl">
+          {activeTab === 'jobs' && <JobRetriever />}
+          {activeTab === 'upload' && <CVUpload />}
+          {activeTab === 'matcher' && <JobMatcher />}
+          {activeTab === 'verify' && <VolunteerList />}
+        </div>
       </main>
 
-      <footer style={{
-        backgroundColor: '#343a40',
-        color: 'white',
-        textAlign: 'center',
-        padding: '20px',
-        marginTop: '40px'
-      }}>
-        <p>© 2024 Intelligent Volunteer Matching System - Multi-Agent Architecture</p>
-        <p>Features: Skill Profiler • Event Matcher • Availability Tracker</p>
+      {/* Footer */}
+      <footer className="bg-gradient-to-r from-gray-800 to-gray-900 text-gray-200 text-center py-6 mt-auto shadow-inner">
+        <p className="text-sm mb-1">
+          © {new Date().getFullYear()} SkillMatrix
+        </p>
+        <p className="text-xs text-gray-400">
+          Features: Skill Profiler • Event Matcher • Availability Tracker
+        </p>
       </footer>
     </div>
   );

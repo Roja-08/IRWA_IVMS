@@ -171,6 +171,31 @@ class VolunteerService:
                 "total_hours": 0
             }
     
+    async def delete_profile(self, profile_id: str) -> Dict[str, Any]:
+        """Delete volunteer profile by volunteer_id"""
+        try:
+            await self._ensure_db_connection()
+            
+            result = await self.db.volunteer_profiles.delete_one({"volunteer_id": profile_id})
+            
+            if result.deleted_count > 0:
+                return {
+                    "success": True,
+                    "message": "Profile deleted successfully"
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Profile not found"
+                }
+                
+        except Exception as e:
+            logger.error(f"Error deleting profile: {e}")
+            return {
+                "success": False,
+                "message": f"Error: {str(e)}"
+            }
+    
     async def search_profiles(self, filters: Dict[str, Any]) -> Dict[str, Any]:
         """Search volunteer profiles with filters"""
         try:

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 const VolunteerList = () => {
-    const [volunteers, setVolunteers] = useState([]);
+    const [volunteers, setVolunteers] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [selectedVolunteer, setSelectedVolunteer] = useState(null);
@@ -18,6 +18,20 @@ const VolunteerList = () => {
             setError(err.response?.data?.detail || 'Error fetching volunteers');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const deleteVolunteer = async (volunteerId) => {
+        if (!window.confirm('Are you sure you want to delete this volunteer profile?')) {
+            return;
+        }
+
+        try {
+            await axios.delete(`http://localhost:8000/api/volunteers/${volunteerId}`);
+            setVolunteers(volunteers.filter(v => v.volunteer_id !== volunteerId));
+            alert('Volunteer deleted successfully!');
+        } catch (err) {
+            alert(err.response?.data?.detail || 'Error deleting volunteer');
         }
     };
 
@@ -51,7 +65,7 @@ const VolunteerList = () => {
                     marginBottom: '25px'
                 }}
             >
-                Check if volunteer profiles exist in the database
+                Check if volunteer profiles exists 
             </p>
 
             <div style={{ textAlign: 'center' }}>
@@ -97,7 +111,7 @@ const VolunteerList = () => {
                 </div>
             )}
 
-            {volunteers.length > 0 && (
+            {volunteers && volunteers.length > 0 && (
                 <div>
                     <h3
                         style={{
@@ -195,7 +209,8 @@ const VolunteerList = () => {
                                                 fontSize: '13px',
                                                 boxShadow: '0 2px 6px rgba(59,130,246,0.25)',
                                                 cursor: 'pointer',
-                                                transition: 'all 0.2s ease'
+                                                transition: 'all 0.2s ease',
+                                                marginBottom: '8px'
                                             }}
                                             onMouseEnter={(e) => {
                                                 e.target.style.backgroundColor = '#2563eb';
@@ -208,6 +223,34 @@ const VolunteerList = () => {
                                             title="Click to copy full Profile ID"
                                         >
                                             📋 Copy ID
+                                        </div>
+                                        <div
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteVolunteer(volunteer.volunteer_id || volunteer._id);
+                                            }}
+                                            style={{
+                                                backgroundColor: '#ef4444',
+                                                color: 'white',
+                                                padding: '6px 10px',
+                                                borderRadius: '20px',
+                                                fontWeight: '600',
+                                                fontSize: '13px',
+                                                boxShadow: '0 2px 6px rgba(239,68,68,0.25)',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.target.style.backgroundColor = '#dc2626';
+                                                e.target.style.transform = 'scale(1.05)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.target.style.backgroundColor = '#ef4444';
+                                                e.target.style.transform = 'scale(1)';
+                                            }}
+                                            title="Delete volunteer profile"
+                                        >
+                                            🗑️ Delete
                                         </div>
                                         <small style={{ color: '#64748b', fontSize: '11px', display: 'block', marginTop: '4px' }}>
                                             {volunteer.volunteer_id || volunteer._id.substring(0, 8) + '...'}
@@ -272,7 +315,7 @@ const VolunteerList = () => {
                 </div>
             )}
 
-            {!loading && volunteers.length === 0 && (
+            {!loading && volunteers && volunteers.length === 0 && (
                 <div
                     style={{
                         backgroundColor: '#fef9c3',

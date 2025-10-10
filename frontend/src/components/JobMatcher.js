@@ -3,7 +3,7 @@ import axios from "axios";
 
 const JobMatcher = () => {
   const [profileId, setProfileId] = useState("");
-  const [matches, setMatches] = useState([]);
+  const [matches, setMatches] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -15,7 +15,7 @@ const JobMatcher = () => {
 
     setLoading(true);
     setError(null);
-    setMatches([]);
+    setMatches(null);
 
     try {
       const response = await axios.get(
@@ -76,14 +76,14 @@ const JobMatcher = () => {
         )}
 
         {/* No Matches Message */}
-        {!loading && matches.length === 0 && profileId && !error && (
+        {!loading && matches && matches.length === 0 && profileId && !error && (
           <div className="bg-yellow-100 border border-yellow-300 text-yellow-700 px-4 py-3 rounded-lg mb-6 text-center">
             ⚠️ No matches found for this profile.
           </div>
         )}
 
         {/* Matches Display */}
-        {matches.length > 0 && (
+        {matches && matches.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
               Found {matches.length} Job Match
