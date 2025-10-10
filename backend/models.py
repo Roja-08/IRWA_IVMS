@@ -1,8 +1,9 @@
 from pydantic import BaseModel, Field, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
-from typing import Optional, List, Any
-from datetime import datetime
+from typing import Optional, List, Any, Dict
+from datetime import datetime, date
 from bson import ObjectId
+from enum import Enum
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -20,6 +21,17 @@ class PyObjectId(ObjectId):
     def __get_pydantic_json_schema__(cls, _core_schema: Any, handler: GetJsonSchemaHandler) -> JsonSchemaValue:
         return {"type": "string"}
 
+class AvailabilityStatus(str, Enum):
+    AVAILABLE = "available"
+    BUSY = "busy"
+    PARTIALLY_AVAILABLE = "partially_available"
+
+class SkillLevel(str, Enum):
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    EXPERT = "expert"
+
 class VolunteerJob(BaseModel):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
     title: str
@@ -33,7 +45,7 @@ class VolunteerJob(BaseModel):
     contact_email: Optional[str] = None
     contact_phone: Optional[str] = None
     website: Optional[str] = None
-    external_id: Optional[str] = None  # ID from external API
+    external_id: Optional[str] = None
     source: str = "volunteerconnector.org"
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -43,9 +55,71 @@ class VolunteerJob(BaseModel):
         arbitrary_types_allowed = True
         json_encoders = {ObjectId: str}
 
+class Skill(BaseModel):
+    name: str
+    level: SkillLevel
+    years_experience: Optional[int] = None
+    verified: bool = False
+
+class Availability(BaseModel):
+    day_of_week: int  # 0=Monday, 6=Sunday
+    start_time: str  # HH:MM format
+    end_time: str    # HH:MM format
+    status: AvailabilityStatus = AvailabilityStatus.AVAILABLE
+
+class VolunteerProfile(BaseModel):
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    name: str
+    email: str
+    phone: Optional[str] = None
+    location: Optional[str] = None
+    skills: List[Skill] = []
+    interests: List[str] = []
+    availability: List[Availability] = []
+    cv_text: Optional[str] = None
+    cv_filename: Optional[str] = None
+    experience_summary: Optional[str] = None
+    preferred_time_commitment: Optional[str] = None
+    max_distance: Optional[int] = None  # in km
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+
+class JobMatch(BaseModel):
+    id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
+    volunteer_id: PyObjectId
+    job_id: PyObjectId
+    match_score: float  # 0.0 to 1.0
+    skill_match_score: float
+    availability_match_score: float
+    location_match_score: float
+    interest_match_score: float
+    reasons: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        populate_by_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+
+class CVUploadResponse(BaseModel):
+    success: bool
+    message: str
+    extracted_skills: Optional[List[str]] = None
+    profile_id: Optional[str] = None
+
 class JobRetrievalResponse(BaseModel):
     success: bool
     message: str
     jobs_retrieved: int
     jobs_stored: int
     errors: Optional[List[str]] = None
+
+class MatchingResponse(BaseModel):
+    success: bool
+    matches: List[Dict[str, Any]]
+    total_matches: int
