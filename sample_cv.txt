@@ -1,0 +1,86 @@
+JANE SMITH
+Software Engineer & Community Volunteer
+jane.smith@email.com | +1-555-0199 | San Francisco, CA
+
+PROFESSIONAL SUMMARY
+Passionate software engineer with 4+ years of experience in full-stack development and a strong commitment to community service. Expertise in Python, JavaScript, and cloud technologies. Dedicated volunteer with experience in teaching, event planning, and fundraising.
+
+TECHNICAL SKILLS
+Programming Languages:
+- Python (Expert, 4 years) - Django, Flask, FastAPI
+- JavaScript (Advanced, 3 years) - React, Node.js, Express
+- Java (Intermediate, 2 years) - Spring Boot
+- SQL (Advanced, 3 years) - PostgreSQL, MySQL
+
+Cloud & DevOps:
+- AWS (Intermediate, 2 years) - EC2, S3, Lambda
+- Docker (Intermediate, 1 year)
+- Git (Advanced, 4 years)
+
+Databases:
+- MongoDB (Intermediate, 2 years)
+- PostgreSQL (Advanced, 3 years)
+- Redis (Beginner, 6 months)
+
+SOFT SKILLS
+- Leadership and team management
+- Project management and planning
+- Public speaking and presentation
+- Cross-cultural communication
+- Problem-solving and analytical thinking
+- Mentoring and teaching
+
+PROFESSIONAL EXPERIENCE
+
+Senior Software Engineer | TechCorp Inc. | 2022 - Present
+- Lead a team of 6 developers in building scalable web applications
+- Architected microservices using Python and AWS
+- Implemented CI/CD pipelines reducing deployment time by 60%
+- Mentored junior developers and conducted technical interviews
+
+Software Engineer | StartupXYZ | 2020 - 2022
+- Developed full-stack applications using React and Python
+- Built RESTful APIs serving 100K+ daily requests
+- Collaborated with product team to define technical requirements
+- Participated in agile development processes
+
+VOLUNTEER EXPERIENCE
+
+Programming Instructor | Code for Good | 2021 - Present
+- Teach Python and web development to underserved youth
+- Developed curriculum for 12-week coding bootcamp
+- Mentored 50+ students with 80% job placement rate
+
+Event Coordinator | Local Food Bank | 2020 - Present
+- Organize monthly food distribution events for 500+ families
+- Coordinate with 30+ volunteers and manage logistics
+- Raised $15,000 through fundraising campaigns
+
+Youth Mentor | Big Brothers Big Sisters | 2019 - Present
+- Provide guidance and support to at-risk teenagers
+- Organize educational and recreational activities
+- Help with academic tutoring and career planning
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of California, Berkeley | 2016 - 2020
+GPA: 3.8/4.0
+
+CERTIFICATIONS
+- AWS Certified Solutions Architect (2023)
+- Certified Scrum Master (2022)
+- Google Analytics Certified (2021)
+
+LANGUAGES
+- English (Native)
+- Spanish (Conversational)
+- Mandarin (Basic)
+
+INTERESTS
+Community service, teaching, environmental sustainability, hiking, photography, open source contributions
+
+AVAILABILITY
+Weekday evenings (6 PM - 9 PM)
+Weekends (flexible schedule)
+Available for both remote and in-person volunteer opportunities
+Willing to travel within 25 miles of San Francisco
