@@ -43,6 +43,15 @@ const CVUpload = () => {
             uploadData.append('email', formData.email);
             uploadData.append('phone', formData.phone);
             uploadData.append('location', formData.location);
+            
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            console.log('Upload user:', user);
+            if (!user.username) {
+                setError('Please login to upload CV');
+                return;
+            }
+            uploadData.append('uploaded_by', user.username);
+            console.log('Uploading with user:', user.username);
 
             const response = await axios.post(
                 'http://localhost:8000/api/volunteers/upload-cv',

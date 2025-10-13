@@ -3,27 +3,59 @@ import CVUpload from './components/CVUpload';
 import JobMatcher from './components/JobMatcher';
 import JobRetriever from './components/JobRetriever';
 import VolunteerList from './components/VolunteerList';
+import Login from './components/Login';
 
 function App() {
+  const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('jobs');
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('user');
+  };
+
+  if (!user) {
+    // Check localStorage for existing session
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+      return null;
+    }
+    return <Login onLogin={handleLogin} />;
+  }
 
   const tabs = [
     { id: 'jobs', label: 'Job Management' },
     { id: 'upload', label: 'Upload CV' },
     { id: 'matcher', label: 'AI Job Matcher' },
-    { id: 'verify', label: 'Verify Database' }
+    { id: 'mycvs', label: 'My CVs', userOnly: true },
+    { id: 'verify', label: 'Verify Database', adminOnly: true }
   ];
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-50 to-gray-100">
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-8 text-center shadow-md">
+      <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-8 text-center shadow-md relative">
         <h1 className="text-4xl font-extrabold tracking-wide mb-2 drop-shadow-sm">
           SkillMatrix
         </h1>
         <p className="text-lg opacity-90">
           Multi-Agent AI System for Volunteer-Job Matching
         </p>
+        <div className="absolute top-4 right-4 flex items-center gap-3">
+          <span className="text-sm">Welcome, {user.username} ({user.role})</span>
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded transition-colors"
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
       {/* Navigation */}
@@ -39,6 +71,7 @@ function App() {
                     ? 'text-white bg-blue-600 shadow-md scale-105'
                     : 'text-gray-700 hover:bg-blue-50'
                 }`}
+              style={{ display: (user.role === 'user' && tab.adminOnly) || (user.role === 'admin' && tab.userOnly) ? 'none' : 'block' }}
             >
               {tab.label}
               {activeTab === tab.id && (
@@ -55,7 +88,8 @@ function App() {
           {activeTab === 'jobs' && <JobRetriever />}
           {activeTab === 'upload' && <CVUpload />}
           {activeTab === 'matcher' && <JobMatcher />}
-          {activeTab === 'verify' && <VolunteerList />}
+          {activeTab === 'mycvs' && user.role === 'user' && <VolunteerList />}
+          {activeTab === 'verify' && user.role === 'admin' && <VolunteerList />}
         </div>
       </main>
 

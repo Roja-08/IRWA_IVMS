@@ -12,7 +12,15 @@ const VolunteerList = () => {
         setError(null);
 
         try {
-            const response = await axios.get('http://localhost:8000/api/volunteers/all');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            console.log('Fetch user:', user);
+            const params = new URLSearchParams();
+            if (user.role) params.append('user_role', user.role);
+            if (user.username) params.append('username', user.username);
+            
+            console.log('API URL:', `http://localhost:8000/api/volunteers/all?${params}`);
+            const response = await axios.get(`http://localhost:8000/api/volunteers/all?${params}`);
+            console.log('API Response:', response.data);
             setVolunteers(response.data.profiles || []);
         } catch (err) {
             setError(err.response?.data?.detail || 'Error fetching volunteers');
@@ -55,7 +63,7 @@ const VolunteerList = () => {
                     marginBottom: '10px'
                 }}
             >
-                👥 Volunteer Details
+                📄 CV Uploads
             </h2>
             <p
                 style={{
@@ -65,7 +73,7 @@ const VolunteerList = () => {
                     marginBottom: '25px'
                 }}
             >
-                Check if volunteer profiles exists 
+                {JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? 'View all CV uploads from users' : 'View your CV uploads'} 
             </p>
 
             <div style={{ textAlign: 'center' }}>
@@ -91,7 +99,7 @@ const VolunteerList = () => {
                         !loading && (e.target.style.backgroundColor = '#10b981')
                     }
                 >
-                    {loading ? '⏳ Loading...' : '🔍 View Volunteers'}
+                    {loading ? '⏳ Loading...' : (JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? '🔍 View All CVs' : '🔍 View My CVs')}
                 </button>
             </div>
 
@@ -120,7 +128,7 @@ const VolunteerList = () => {
                             textAlign: 'center'
                         }}
                     >
-                        {volunteers.length} Volunteers Found
+                        {volunteers.length} CV{volunteers.length !== 1 ? 's' : ''} Found
                     </h3>
 
                     <div
@@ -188,6 +196,11 @@ const VolunteerList = () => {
                                             <strong>Created:</strong>{' '}
                                             {new Date(volunteer.created_at).toLocaleString()}
                                         </p>
+                                        {volunteer.uploaded_by && (
+                                            <p style={{ margin: '5px 0', color: '#475569' }}>
+                                                <strong>Uploaded by:</strong> {volunteer.uploaded_by}
+                                            </p>
+                                        )}
                                         <div style={{ marginTop: '10px', fontSize: '12px', color: '#3b82f6', fontWeight: '500' }}>
                                             Click to view full details →
                                         </div>
@@ -327,9 +340,11 @@ const VolunteerList = () => {
                         marginTop: '20px'
                     }}
                 >
-                    <h4 style={{ margin: '0 0 5px 0' }}>⚠️ No Volunteers Found</h4>
+                    <h4 style={{ margin: '0 0 5px 0' }}>⚠️ No CVs Found</h4>
                     <p style={{ margin: 0 }}>
-                        Upload some CVs first to view data here.
+                        {JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' 
+                            ? 'No CV uploads found in the system.' 
+                            : 'You haven\'t uploaded any CVs yet.'}
                     </p>
                 </div>
             )}

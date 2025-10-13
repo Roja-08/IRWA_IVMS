@@ -10,6 +10,7 @@ from services.volunteer_service import VolunteerService
 from models import JobRetrievalResponse, CVUploadResponse, MatchingResponse
 from database import connect_to_mongo, close_mongo_connection
 from config import API_HOST, API_PORT
+from auth import AuthService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +47,7 @@ app.add_middleware(
 job_service = JobService()
 cv_processor = CVProcessorService()
 volunteer_service = VolunteerService()
+auth_service = AuthService()
 
 @app.get("/")
 async def root():
@@ -60,6 +62,38 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "message": "API is running"}
+
+@app.post("/api/auth/login")
+async def login(credentials: dict):
+    """Login endpoint"""
+    username = credentials.get('username')
+    password = credentials.get('password')
+    
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="Username and password required")
+    
+    result = await auth_service.login(username, password)
+    
+    if result['success']:
+        return result
+    else:
+        raise HTTPException(status_code=401, detail=result['message'])
+
+@app.post("/api/auth/signup")
+async def signup(credentials: dict):
+    """Signup endpoint"""
+    username = credentials.get('username')
+    password = credentials.get('password')
+    
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="Username and password required")
+    
+    result = await auth_service.signup(username, password)
+    
+    if result['success']:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result['message'])
 
 @app.post("/api/jobs/retrieve", response_model=JobRetrievalResponse)
 async def retrieve_jobs(limit: int = 100):
@@ -221,7 +255,8 @@ async def upload_cv(
     name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(None),
-    location: str = Form(None)
+    location: str = Form(None),
+    uploaded_by: str = Form(None)
 ):
     """Upload and process CV to create volunteer profile"""
     try:
@@ -242,13 +277,19 @@ async def upload_cv(
             'skills': cv_result['skills'],
             'cv_text': cv_result['cv_text'],
             'cv_filename': cv_result['filename'],
-            'experience_summary': cv_result['experience_summary']
+            'experience_summary': cv_result['experience_summary'],
+            'uploaded_by': uploaded_by
         }
         
         # Add contact info from CV if not provided
         if not phone and cv_result['contact_info'].get('phone'):
             profile_data['phone'] = cv_result['contact_info']['phone']
         
+        # Ensure uploaded_by is set
+        if not uploaded_by:
+            raise HTTPException(status_code=400, detail="User must be logged in to upload CV")
+        
+        logger.info(f"Creating profile with uploaded_by: {uploaded_by}")
         profile_result = await volunteer_service.create_profile(profile_data)
         
         if profile_result['success']:
@@ -270,15 +311,21 @@ async def upload_cv(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/volunteers/all")
-async def get_all_volunteers():
-    """Get all volunteer profiles for verification"""
+async def get_all_volunteers(user_role: str = None, username: str = None):
+    """Get volunteer profiles based on user role"""
     try:
         from database import get_database
         db = get_database()
         
-        cursor = db.volunteer_profiles.find({}, {
+        # Build query based on user role
+        query = {}
+        if user_role == "user" and username:
+            query["uploaded_by"] = username
+            logger.info(f"Filtering CVs for user: {username}, query: {query}")
+        
+        cursor = db.volunteer_profiles.find(query, {
             "name": 1, "email": 1, "location": 1, 
-            "skills": 1, "created_at": 1, "cv_filename": 1, "volunteer_id": 1
+            "skills": 1, "created_at": 1, "cv_filename": 1, "volunteer_id": 1, "uploaded_by": 1
         })
         profiles = await cursor.to_list(length=100)
         
@@ -286,6 +333,7 @@ async def get_all_volunteers():
         for profile in profiles:
             profile['_id'] = str(profile['_id'])
         
+        logger.info(f"Found {len(profiles)} profiles for query: {query}")
         return {
             "success": True,
             "profiles": profiles,
@@ -293,7 +341,7 @@ async def get_all_volunteers():
         }
         
     except Exception as e:
-        logger.error(f"Error getting all volunteers: {e}")
+        logger.error(f"Error getting volunteers: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/volunteers/{profile_id}")

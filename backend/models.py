@@ -89,6 +89,7 @@ class VolunteerProfile(BaseModel):
     experience_summary: Optional[str] = None
     preferred_time_commitment: Optional[str] = None
     max_distance: Optional[int] = None  # in km
+    uploaded_by: Optional[str] = None  # Username who uploaded this CV
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
