@@ -11,6 +11,7 @@ from models import JobRetrievalResponse, CVUploadResponse, MatchingResponse
 from database import connect_to_mongo, close_mongo_connection
 from config import API_HOST, API_PORT
 from auth import AuthService
+from agents.diversity_fairness import DiversityFairnessAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +49,7 @@ job_service = JobService()
 cv_processor = CVProcessorService()
 volunteer_service = VolunteerService()
 auth_service = AuthService()
+diversity_agent = DiversityFairnessAgent()
 
 @app.get("/")
 async def root():
@@ -401,12 +403,24 @@ async def get_availability(profile_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/volunteers/{profile_id}/matches", response_model=MatchingResponse)
-async def get_job_matches(profile_id: str):
-    """Get job matches for a volunteer using AI matching"""
+async def get_job_matches(profile_id: str, apply_diversity: bool = False):
+    """Get job matches for a volunteer using AI matching with optional diversity filters"""
     try:
         logger.info(f"Finding matches for volunteer {profile_id}")
         
         result = await volunteer_service.find_matches(profile_id)
+        
+        if result['success'] and apply_diversity:
+            try:
+                diversity_result = await diversity_agent.process(
+                    job_id="general_matching", 
+                    candidate_matches=result['matches']
+                )
+                
+                if diversity_result['success']:
+                    result['matches'] = diversity_result['filtered_matches']
+            except Exception as e:
+                logger.warning(f"Diversity filtering failed: {e}")
         
         if result['success']:
             return MatchingResponse(
@@ -420,6 +434,8 @@ async def get_job_matches(profile_id: str):
     except Exception as e:
         logger.error(f"Error finding matches: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @app.delete("/api/volunteers/{profile_id}")
 async def delete_volunteer_profile(profile_id: str):

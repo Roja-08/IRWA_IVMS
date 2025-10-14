@@ -6,6 +6,7 @@ const JobMatcher = () => {
   const [matches, setMatches] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedJob, setSelectedJob] = useState(null);
 
   const findMatches = async () => {
     if (!profileId.trim()) {
@@ -94,7 +95,8 @@ const JobMatcher = () => {
               {matches.map((match, index) => (
                 <div
                   key={index}
-                  className="bg-white border border-gray-200 rounded-2xl p-6 shadow-md hover:shadow-lg transition-shadow"
+                  onClick={() => setSelectedJob(match.job)}
+                  className="bg-white border border-gray-200 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all cursor-pointer hover:scale-105"
                 >
                   {/* Header */}
                   <div className="flex justify-between items-start mb-4">
@@ -183,8 +185,95 @@ const JobMatcher = () => {
                       </p>
                     </div>
                   )}
+                  
+                  <div className="mt-4 text-center">
+                    <span className="text-xs text-blue-600 font-medium">
+                      Click to view full details →
+                    </span>
+                  </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Job Details Modal */}
+        {selectedJob && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-90vh overflow-y-auto shadow-2xl">
+              <div className="p-6 border-b border-gray-200 flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-800">{selectedJob.title}</h2>
+                <button
+                  onClick={() => setSelectedJob(null)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">Organization</h3>
+                    <p className="text-gray-600">{selectedJob.organization || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">Location</h3>
+                    <p className="text-gray-600">{selectedJob.location || 'Not specified'}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">Description</h3>
+                  <p className="text-gray-600 leading-relaxed">{selectedJob.description || 'No description available'}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-700 mb-2">Required Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedJob.skills_required?.map((skill, idx) => (
+                      <span key={idx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                        {skill}
+                      </span>
+                    )) || <span className="text-gray-500">No specific skills required</span>}
+                  </div>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">Time Commitment</h3>
+                    <p className="text-gray-600">{selectedJob.time_commitment || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">Duration</h3>
+                    <p className="text-gray-600">
+                      {selectedJob.start_date && selectedJob.end_date 
+                        ? `${new Date(selectedJob.start_date).toLocaleDateString()} - ${new Date(selectedJob.end_date).toLocaleDateString()}`
+                        : 'Flexible timing'}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">Contact Email</h3>
+                    <p className="text-gray-600">{selectedJob.contact_email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">Contact Phone</h3>
+                    <p className="text-gray-600">{selectedJob.contact_phone || 'Not provided'}</p>
+                  </div>
+                </div>
+                
+                {selectedJob.website && (
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">Website</h3>
+                    <a href={selectedJob.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      {selectedJob.website}
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
