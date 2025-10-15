@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from .base_agent import BaseAgent
 from models import Availability, AvailabilityStatus
 from database import get_database
+from ml_classifier import MLTextClassifier
 
 class AvailabilityTrackerAgent(BaseAgent):
     """Agent responsible for tracking and managing volunteer availability"""
@@ -10,6 +11,7 @@ class AvailabilityTrackerAgent(BaseAgent):
     def __init__(self):
         super().__init__("AvailabilityTracker")
         self.db = None
+        self.ml_classifier = MLTextClassifier()
     
     async def _ensure_db_connection(self):
         if self.db is None:

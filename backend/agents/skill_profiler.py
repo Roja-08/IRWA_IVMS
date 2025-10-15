@@ -2,12 +2,14 @@ import re
 from typing import Dict, List, Any
 from .base_agent import BaseAgent
 from models import Skill, SkillLevel
+from ml_classifier import MLTextClassifier
 
 class SkillProfilerAgent(BaseAgent):
     """Agent responsible for extracting and profiling skills from CV text"""
     
     def __init__(self):
         super().__init__("SkillProfiler")
+        self.ml_classifier = MLTextClassifier()
         self.skill_patterns = {
             'programming': ['python', 'java', 'javascript', 'c++', 'c#', 'php', 'ruby', 'go', 'rust'],
             'web': ['html', 'css', 'react', 'angular', 'vue', 'node.js', 'express', 'django', 'flask'],
@@ -43,6 +45,21 @@ class SkillProfilerAgent(BaseAgent):
             # Extract additional skills using patterns
             additional_skills = self._extract_pattern_based_skills(cv_text)
             extracted_skills.extend(additional_skills)
+            
+            # Enhance with ML-based skill extraction
+            try:
+                ml_skills = self.ml_classifier.extract_skills_ml(cv_text)
+                for ml_skill in ml_skills:
+                    if not any(skill.name.lower() == ml_skill['name'].lower() for skill in extracted_skills):
+                        extracted_skills.append(Skill(
+                            name=ml_skill['name'],
+                            level=SkillLevel(ml_skill['level']),
+                            years_experience=ml_skill.get('years_experience'),
+                            verified=False
+                        ))
+                self.log_info(f"ML enhanced skills: added {len(ml_skills)} additional skills")
+            except Exception as e:
+                self.log_warning(f"ML skill enhancement failed: {e}")
             
             # Remove duplicates
             unique_skills = {}

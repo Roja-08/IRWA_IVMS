@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 from services.job_service import JobService
 from services.cv_processor import CVProcessorService
+from ml_classifier import MLTextClassifier
 from services.volunteer_service import VolunteerService
 from models import JobRetrievalResponse, CVUploadResponse, MatchingResponse
 from database import connect_to_mongo, close_mongo_connection
@@ -50,6 +51,7 @@ cv_processor = CVProcessorService()
 volunteer_service = VolunteerService()
 auth_service = AuthService()
 diversity_agent = DiversityFairnessAgent()
+ml_classifier = MLTextClassifier()
 
 @app.get("/")
 async def root():
@@ -265,11 +267,31 @@ async def upload_cv(
     try:
         logger.info(f"Processing CV upload for {name}")
         
-        # Process CV
+        # Process CV with ML enhancement
         cv_result = await cv_processor.process_cv(file)
         
         if not cv_result['success']:
             raise HTTPException(status_code=400, detail=cv_result['message'])
+        
+        # Enhance skills with ML classification
+        try:
+            ml_skills = ml_classifier.extract_skills_ml(cv_result['cv_text'])
+            if ml_skills:
+                # Merge ML skills with existing skills
+                existing_skills = {skill.name.lower(): skill for skill in cv_result['skills']}
+                for ml_skill in ml_skills:
+                    skill_name = ml_skill['name'].lower()
+                    if skill_name not in existing_skills:
+                        from models import Skill, SkillLevel
+                        new_skill = Skill(
+                            name=ml_skill['name'],
+                            level=SkillLevel(ml_skill['level']),
+                            years_experience=ml_skill.get('years_experience', 0)
+                        )
+                        cv_result['skills'].append(new_skill)
+                logger.info(f"Enhanced skills with ML: added {len(ml_skills)} skills")
+        except Exception as e:
+            logger.warning(f"ML skill enhancement failed: {e}")
         
         # Create volunteer profile
         profile_data = {

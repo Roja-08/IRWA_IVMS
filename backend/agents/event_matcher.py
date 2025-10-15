@@ -95,27 +95,40 @@ class EventMatcherAgent(BaseAgent):
         }
     
     def _calculate_skill_match(self, volunteer_skills: List[Dict], required_skills: List[str]) -> float:
-        """Calculate skill match score"""
+        """Calculate skill match score using ML methods"""
         if not required_skills:
             return 0.8  # High score if no specific skills required
         
         if not volunteer_skills:
             return 0.2  # Low but not zero if volunteer has no skills
         
-        volunteer_skill_names = [skill.get('name', '').lower() for skill in volunteer_skills]
-        required_skills_lower = [skill.lower() for skill in required_skills]
-        
-        matches = 0
-        for req_skill in required_skills_lower:
-            for vol_skill in volunteer_skill_names:
-                # More flexible matching
-                if (req_skill in vol_skill or vol_skill in req_skill or 
-                    any(word in vol_skill for word in req_skill.split()) or
-                    any(word in req_skill for word in vol_skill.split())):
-                    matches += 1
-                    break
-        
-        return min(matches / len(required_skills), 1.0)
+        try:
+            # Import ML classifier
+            from ml_classifier import MLTextClassifier
+            ml_classifier = MLTextClassifier()
+            
+            volunteer_skill_names = [skill.get('name', '') for skill in volunteer_skills]
+            
+            # Use ML-enhanced skill matching
+            ml_score = ml_classifier.enhanced_skill_matching(volunteer_skill_names, required_skills)
+            
+            return ml_score
+            
+        except Exception as e:
+            # Fallback to original method if ML fails
+            volunteer_skill_names = [skill.get('name', '').lower() for skill in volunteer_skills]
+            required_skills_lower = [skill.lower() for skill in required_skills]
+            
+            matches = 0
+            for req_skill in required_skills_lower:
+                for vol_skill in volunteer_skill_names:
+                    if (req_skill in vol_skill or vol_skill in req_skill or 
+                        any(word in vol_skill for word in req_skill.split()) or
+                        any(word in req_skill for word in vol_skill.split())):
+                        matches += 1
+                        break
+            
+            return min(matches / len(required_skills), 1.0)
     
     def _calculate_location_match(self, volunteer_location: str, job_location: str) -> float:
         """Calculate location match score"""
