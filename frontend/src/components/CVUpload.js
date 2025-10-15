@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
 const CVUpload = () => {
@@ -12,6 +12,14 @@ const CVUpload = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
+    const [locating, setLocating] = useState(false);
+    const [showLocationPicker, setShowLocationPicker] = useState(false);
+    const mapRef = useRef(null);
+    const mapInstanceRef = useRef(null);
+    const markerRef = useRef(null);
+    const [tempCoords, setTempCoords] = useState(null);
+    const [tempAddress, setTempAddress] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [availabilityType, setAvailabilityType] = useState('weekly');
     const [weeklyAvailability, setWeeklyAvailability] = useState([
         { day: 'Monday', available: false, startTime: '09:00', endTime: '17:00' },
@@ -38,6 +46,160 @@ const CVUpload = () => {
     const handleFileChange = (e) => {
         setFile(e.target.files[0]);
     };
+
+    const placeOrMoveMarker = (L, lat, lng) => {
+        if (markerRef.current) {
+            markerRef.current.setLatLng([lat, lng]);
+        } else if (mapInstanceRef.current) {
+            markerRef.current = L.marker([lat, lng]).addTo(mapInstanceRef.current);
+        }
+        if (mapInstanceRef.current) {
+            mapInstanceRef.current.setView([lat, lng], 13);
+        }
+    };
+
+    const reverseGeocode = async (lat, lon) => {
+        try {
+            const resp = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`,
+                { headers: { Accept: 'application/json' } }
+            );
+            const data = await resp.json();
+            const address = data.address || {};
+            const locality = address.city || address.town || address.village || address.hamlet;
+            const state = address.state;
+            const country = address.country;
+            const display = [locality, state, country].filter(Boolean).join(', ') || data.display_name || `${Number(lat).toFixed(5)}, ${Number(lon).toFixed(5)}`;
+            setTempAddress(display);
+            return display;
+        } catch {
+            const fallback = `${Number(lat).toFixed(5)}, ${Number(lon).toFixed(5)}`;
+            setTempAddress(fallback);
+            return fallback;
+        }
+    };
+
+    const forwardGeocode = async (query) => {
+        try {
+            const q = (query || '').trim();
+            if (!q) return;
+            const resp = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+                { headers: { Accept: 'application/json' } }
+            );
+            const results = await resp.json();
+            if (Array.isArray(results) && results.length > 0) {
+                // eslint-disable-next-line no-undef
+                const L = window.L;
+                const r = results[0];
+                const lat = parseFloat(r.lat);
+                const lon = parseFloat(r.lon);
+                setTempCoords({ lat, lon });
+                placeOrMoveMarker(L, lat, lon);
+                setTempAddress(r.display_name);
+            }
+        } catch {
+            // ignore
+        }
+    };
+
+    const handleUseMyLocation = async () => {
+        try {
+            setError(null);
+            setLocating(true);
+
+            if (!navigator.geolocation) {
+                setError('Geolocation is not supported by your browser');
+                return;
+            }
+
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000
+                });
+            });
+
+            const { latitude, longitude } = position.coords;
+
+            if (showLocationPicker) {
+                // eslint-disable-next-line no-undef
+                const L = window.L;
+                setTempCoords({ lat: latitude, lon: longitude });
+                placeOrMoveMarker(L, latitude, longitude);
+                await reverseGeocode(latitude, longitude);
+            } else {
+                const display = await reverseGeocode(latitude, longitude);
+                setFormData({ ...formData, location: display });
+            }
+        } catch (err) {
+            const message = err?.message || 'Unable to fetch your location';
+            setError(message);
+        } finally {
+            setLocating(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!showLocationPicker) return;
+
+        const ensureLeafletLoaded = async () => {
+            const leafletCssId = 'leaflet-css-cdn';
+            const leafletJsId = 'leaflet-js-cdn';
+
+            if (!document.getElementById(leafletCssId)) {
+                const link = document.createElement('link');
+                link.id = leafletCssId;
+                link.rel = 'stylesheet';
+                link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+                document.head.appendChild(link);
+            }
+
+            if (!document.getElementById(leafletJsId)) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.id = leafletJsId;
+                    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                    script.async = true;
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.body.appendChild(script);
+                });
+            }
+        };
+
+        const initMap = async () => {
+            try {
+                await ensureLeafletLoaded();
+                // eslint-disable-next-line no-undef
+                const L = window.L;
+                if (!mapRef.current) return;
+
+                if (!mapInstanceRef.current) {
+                    mapInstanceRef.current = L.map(mapRef.current).setView([20, 0], 2);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    }).addTo(mapInstanceRef.current);
+
+                    mapInstanceRef.current.on('click', async (e) => {
+                        const { lat, lng } = e.latlng;
+                        setTempCoords({ lat, lon: lng });
+                        placeOrMoveMarker(L, lat, lng);
+                        await reverseGeocode(lat, lng);
+                    });
+                }
+
+                if (formData.location) {
+                    await forwardGeocode(formData.location);
+                }
+            } catch (err) {
+                setError('Failed to load map library');
+            }
+        };
+
+        initMap();
+    }, [showLocationPicker]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -147,37 +309,62 @@ const CVUpload = () => {
                             {field.charAt(0).toUpperCase() + field.slice(1)}{' '}
                             {field === 'name' || field === 'email' ? '*' : ''}
                         </label>
-                        <input
-                            type={
-                                field === 'email'
-                                    ? 'email'
-                                    : field === 'phone'
-                                    ? 'tel'
-                                    : 'text'
-                            }
-                            name={field}
-                            value={formData[field]}
-                            onChange={handleInputChange}
-                            required={field === 'name' || field === 'email'}
-                            pattern={field === 'phone' ? '[0-9+\-\s()]{10,15}' : undefined}
-                            title={field === 'phone' ? 'Please enter a valid phone number (10-15 digits)' : undefined}
-                            placeholder={field === 'phone' ? '+1234567890 or 123-456-7890' : undefined}
-                            style={{
-                                width: '100%',
-                                padding: '10px 12px',
-                                border: '1px solid #d1d5db',
-                                borderRadius: '8px',
-                                fontSize: '15px',
-                                outline: 'none',
-                                transition: 'all 0.2s ease',
-                            }}
-                            onFocus={(e) =>
-                                (e.target.style.borderColor = '#3b82f6')
-                            }
-                            onBlur={(e) =>
-                                (e.target.style.borderColor = '#d1d5db')
-                            }
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type={
+                                    field === 'email'
+                                        ? 'email'
+                                        : field === 'phone'
+                                        ? 'tel'
+                                        : 'text'
+                                }
+                                name={field}
+                                value={formData[field]}
+                                onChange={handleInputChange}
+                                required={field === 'name' || field === 'email'}
+                                pattern={field === 'phone' ? '[0-9+\-\s()]\{10,15\}' : undefined}
+                                title={field === 'phone' ? 'Please enter a valid phone number (10-15 digits)' : undefined}
+                                placeholder={field === 'phone' ? '+1234567890 or 123-456-7890' : undefined}
+                                style={{
+                                    width: '100%',
+                                    padding: field === 'location' ? '10px 64px 10px 12px' : '10px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '8px',
+                                    fontSize: '15px',
+                                    outline: 'none',
+                                    transition: 'all 0.2s ease',
+                                }}
+                                onFocus={(e) =>
+                                    (e.target.style.borderColor = '#3b82f6')
+                                }
+                                onBlur={(e) =>
+                                    (e.target.style.borderColor = '#d1d5db')
+                                }
+                            />
+                            {field === 'location' && (
+                                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '6px' }}>
+                                    <button
+                                        type="button"
+                                        aria-label="Detect my location"
+                                        title="Detect my location"
+                                        onClick={handleUseMyLocation}
+                                        disabled={locating}
+                                        style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#0f172a', borderRadius: '6px', padding: '4px 6px', cursor: locating ? 'not-allowed' : 'pointer' }}
+                                    >
+                                        📶
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-label="Pick location on map"
+                                        title="Pick location on map"
+                                        onClick={() => { setSearchQuery(formData.location || ''); setShowLocationPicker(true); }}
+                                        style={{ background: '#e0f2fe', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '6px', padding: '4px 6px', cursor: 'pointer' }}
+                                    >
+                                        🗺️
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ))}
 
@@ -360,6 +547,74 @@ const CVUpload = () => {
                 </button>
             </form>
 
+            {showLocationPicker && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(0,0,0,0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000
+                    }}
+                    onClick={() => setShowLocationPicker(false)}
+                >
+                    <div
+                        style={{
+                            background: '#fff',
+                            borderRadius: '12px',
+                            width: 'min(92vw, 720px)',
+                            maxHeight: '85vh',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '8px' }}>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search location (city, address)"
+                                style={{ flex: 1, padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '8px' }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => forwardGeocode(searchQuery)}
+                                style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer' }}
+                            >
+                                Search
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleUseMyLocation}
+                                disabled={locating}
+                                style={{ background: locating ? '#93c5fd' : '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: '8px', padding: '8px 12px', cursor: locating ? 'not-allowed' : 'pointer' }}
+                            >
+                                {locating ? 'Detecting…' : 'Use my location'}
+                            </button>
+                        </div>
+                        <div style={{ height: '420px' }}>
+                            <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+                        </div>
+                        <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                            <div style={{ color: '#475569', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {tempAddress ? `Selected: ${tempAddress}` : 'Click on the map to select a location'}
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button type="button" onClick={() => setShowLocationPicker(false)} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#0f172a', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer' }}>Cancel</button>
+                                <button type="button" onClick={() => { if (tempAddress) { setFormData({ ...formData, location: tempAddress }); } setShowLocationPicker(false); }} disabled={!tempAddress} style={{ background: !tempAddress ? '#93c5fd' : '#10b981', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: !tempAddress ? 'not-allowed' : 'pointer' }}>Set</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {error && (
                 <div
                     style={{
@@ -417,17 +672,28 @@ const CVUpload = () => {
                         >
                             Your Unique Profile ID:
                         </h4>
-                        <p
-                            style={{
-                                margin: '5px 0 0 0',
-                                fontSize: '20px',
-                                fontWeight: 'bold',
-                                fontFamily: 'monospace',
-                                color: '#065f46'
-                            }}
-                        >
-                            {result.profile_id}
-                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '4px' }}>
+                            <p
+                                style={{
+                                    margin: 0,
+                                    fontSize: '20px',
+                                    fontWeight: 'bold',
+                                    fontFamily: 'monospace',
+                                    color: '#065f46'
+                                }}
+                            >
+                                {result.profile_id}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={async () => { try { await navigator.clipboard.writeText(String(result.profile_id || '')); } catch {} }}
+                                style={{ background: '#e0f2fe', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer' }}
+                                title="Copy ID"
+                                aria-label="Copy profile ID"
+                            >
+                                Copy
+                            </button>
+                        </div>
                         <small style={{ color: '#16a34a' }}>
                             Save this ID to find job matches later!
                         </small>
