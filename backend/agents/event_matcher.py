@@ -143,19 +143,92 @@ class EventMatcherAgent(BaseAgent):
         return 0.4  # Different locations but still possible
     
     def _calculate_availability_match(self, volunteer_availability: List[Dict], job: Dict) -> float:
-        """Calculate availability match score"""
+        """Calculate availability match score based on actual volunteer availability"""
         if not volunteer_availability:
-            return 0.5  # Neutral if no availability specified
+            return 0.6  # Neutral if no availability specified
         
-        # Simple availability check - can be enhanced with actual time matching
-        available_days = len([av for av in volunteer_availability if av.get('status') == 'available'])
+        # Handle different availability formats
+        if isinstance(volunteer_availability, dict):
+            availability_type = volunteer_availability.get('type', 'weekly')
+            
+            if availability_type == 'monthly':
+                return self._calculate_monthly_availability_match(volunteer_availability, job)
+            elif availability_type == 'weekly' and 'schedule' in volunteer_availability:
+                volunteer_availability = volunteer_availability['schedule']
         
-        if available_days >= 3:
-            return 1.0
-        elif available_days >= 1:
-            return 0.7
+        # Weekly schedule matching
+        if not volunteer_availability:
+            return 0.6
+        
+        # Count available time slots and calculate total hours
+        total_available_hours = 0
+        available_days = 0
+        
+        for slot in volunteer_availability:
+            if slot.get('status') == 'available' or slot.get('available', False):
+                available_days += 1
+                # Calculate hours if time slots are provided
+                if 'start_time' in slot and 'end_time' in slot:
+                    start_hour = int(slot['start_time'].split(':')[0])
+                    end_hour = int(slot['end_time'].split(':')[0])
+                    total_available_hours += max(0, end_hour - start_hour)
+        
+        # Job time commitment matching
+        job_time_commitment = job.get('time_commitment', '').lower()
+        
+        # Score based on available days and hours
+        day_score = min(available_days / 7.0, 1.0)  # Normalize to 0-1
+        
+        # Bonus for matching job time requirements
+        time_bonus = 0
+        if 'part-time' in job_time_commitment or 'flexible' in job_time_commitment:
+            if available_days >= 2:  # At least 2 days available
+                time_bonus = 0.2
+        elif 'full-time' in job_time_commitment:
+            if available_days >= 5:  # At least 5 days available
+                time_bonus = 0.3
+        elif 'weekend' in job_time_commitment:
+            weekend_available = any(slot.get('day_of_week', -1) in [5, 6] for slot in volunteer_availability if slot.get('status') == 'available')
+            if weekend_available:
+                time_bonus = 0.4
+        
+        # Calculate final score
+        base_score = day_score * 0.7  # 70% weight for general availability
+        final_score = min(base_score + time_bonus, 1.0)
+        
+        return max(final_score, 0.1)  # Minimum score of 0.1
+    
+    def _calculate_monthly_availability_match(self, monthly_availability: Dict, job: Dict) -> float:
+        """Calculate availability match for monthly commitment format"""
+        hours_per_week = monthly_availability.get('hoursPerWeek', 10)
+        preferred_days = monthly_availability.get('preferredDays', 'flexible')
+        time_preference = monthly_availability.get('timePreference', 'flexible')
+        
+        job_time_commitment = job.get('time_commitment', '').lower()
+        
+        # Base score from hours commitment
+        if hours_per_week >= 20:
+            base_score = 1.0
+        elif hours_per_week >= 15:
+            base_score = 0.9
+        elif hours_per_week >= 10:
+            base_score = 0.8
+        elif hours_per_week >= 5:
+            base_score = 0.6
         else:
-            return 0.3
+            base_score = 0.4
+        
+        # Adjust based on job requirements
+        if 'part-time' in job_time_commitment and hours_per_week <= 15:
+            base_score += 0.1
+        elif 'full-time' in job_time_commitment and hours_per_week >= 20:
+            base_score += 0.1
+        elif 'weekend' in job_time_commitment and preferred_days == 'weekends':
+            base_score += 0.2
+        elif preferred_days == 'flexible':
+            base_score += 0.1
+        
+        return min(base_score, 1.0)
     
     def _calculate_interest_match(self, volunteer_interests: List[str], job: Dict) -> float:
         """Calculate interest match score"""

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, GetJsonSchemaHandler
 from pydantic.json_schema import JsonSchemaValue
-from typing import Optional, List, Any, Dict
+from typing import Optional, List, Any, Dict, Union
 from datetime import datetime, date
 from bson import ObjectId
 from enum import Enum
@@ -83,7 +83,7 @@ class VolunteerProfile(BaseModel):
     location: Optional[str] = None
     skills: List[Skill] = []
     interests: List[str] = []
-    availability: List[Availability] = []
+    availability: Optional[Any] = []  # Can be List[Availability] or Dict for monthly format
     cv_text: Optional[str] = None
     cv_filename: Optional[str] = None
     experience_summary: Optional[str] = None

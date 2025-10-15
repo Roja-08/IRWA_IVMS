@@ -11,6 +11,7 @@ from models import JobRetrievalResponse, CVUploadResponse, MatchingResponse
 from database import connect_to_mongo, close_mongo_connection
 from config import API_HOST, API_PORT
 from auth import AuthService
+from agents.diversity_fairness import DiversityFairnessAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +49,7 @@ job_service = JobService()
 cv_processor = CVProcessorService()
 volunteer_service = VolunteerService()
 auth_service = AuthService()
+diversity_agent = DiversityFairnessAgent()
 
 @app.get("/")
 async def root():
@@ -256,7 +258,8 @@ async def upload_cv(
     email: str = Form(...),
     phone: str = Form(None),
     location: str = Form(None),
-    uploaded_by: str = Form(None)
+    uploaded_by: str = Form(None),
+    availability: str = Form(None)
 ):
     """Upload and process CV to create volunteer profile"""
     try:
@@ -285,6 +288,16 @@ async def upload_cv(
         if not phone and cv_result['contact_info'].get('phone'):
             profile_data['phone'] = cv_result['contact_info']['phone']
         
+        # Add availability if provided
+        if availability:
+            import json
+            try:
+                availability_data = json.loads(availability)
+                profile_data['availability'] = availability_data
+                logger.info(f"Added availability data: {len(availability_data)} time slots")
+            except Exception as e:
+                logger.warning(f"Failed to parse availability data: {e}")
+        
         # Ensure uploaded_by is set
         if not uploaded_by:
             raise HTTPException(status_code=400, detail="User must be logged in to upload CV")
@@ -293,8 +306,21 @@ async def upload_cv(
         profile_result = await volunteer_service.create_profile(profile_data)
         
         if profile_result['success']:
-            # Generate user-friendly profile ID format
             profile_id = profile_result['profile_id']
+            
+            # Process availability with availability tracker if provided
+            if availability:
+                try:
+                    availability_data = json.loads(availability)
+                    if availability_data:
+                        from agents.availability_tracker import AvailabilityTrackerAgent
+                        availability_tracker = AvailabilityTrackerAgent()
+                        await availability_tracker.process(profile_id, availability_data)
+                        logger.info(f"Processed availability for volunteer {profile_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to process availability with tracker: {e}")
+            
+            # Generate user-friendly profile ID format
             friendly_id = f"VOL-{profile_id[:8].upper()}"
             
             return CVUploadResponse(
@@ -401,12 +427,24 @@ async def get_availability(profile_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/volunteers/{profile_id}/matches", response_model=MatchingResponse)
-async def get_job_matches(profile_id: str):
-    """Get job matches for a volunteer using AI matching"""
+async def get_job_matches(profile_id: str, apply_diversity: bool = False):
+    """Get job matches for a volunteer using AI matching with optional diversity filters"""
     try:
         logger.info(f"Finding matches for volunteer {profile_id}")
         
         result = await volunteer_service.find_matches(profile_id)
+        
+        if result['success'] and apply_diversity:
+            try:
+                diversity_result = await diversity_agent.process(
+                    job_id="general_matching", 
+                    candidate_matches=result['matches']
+                )
+                
+                if diversity_result['success']:
+                    result['matches'] = diversity_result['filtered_matches']
+            except Exception as e:
+                logger.warning(f"Diversity filtering failed: {e}")
         
         if result['success']:
             return MatchingResponse(
@@ -420,6 +458,8 @@ async def get_job_matches(profile_id: str):
     except Exception as e:
         logger.error(f"Error finding matches: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @app.delete("/api/volunteers/{profile_id}")
 async def delete_volunteer_profile(profile_id: str):
