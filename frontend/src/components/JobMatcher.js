@@ -91,7 +91,7 @@ const JobMatcher = () => {
               {matches.length > 1 ? "es" : ""}
             </h2>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
               {matches.map((match, index) => (
                 <div
                   key={index}
@@ -193,6 +193,94 @@ const JobMatcher = () => {
                   </div>
                 </div>
               ))}
+            </div>
+            
+            {/* Skill Suggestions - Bottom Section */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-md mt-8">
+              <h3 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
+                🎯 Skills to Improve
+              </h3>
+              
+              {(() => {
+                const lowScoreMatches = matches.filter(match => match.match_score < 0.7);
+                const allJobSkills = matches.flatMap(match => match.job.skills_required || []);
+                const skillCounts = {};
+                allJobSkills.forEach(skill => {
+                  skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+                });
+                const topSkills = Object.entries(skillCounts)
+                  .sort(([,a], [,b]) => b - a)
+                  .slice(0, 8)
+                  .map(([skill]) => skill);
+                
+                const avgScore = matches.reduce((sum, match) => sum + match.match_score, 0) / matches.length;
+                
+                return (
+                  <div className="grid md:grid-cols-3 gap-6">
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-800 mb-3">
+                        📊 Your Match Analysis
+                      </h4>
+                      <p className="text-blue-700 mb-2">
+                        Average Score: <span className="font-bold text-xl">{Math.round(avgScore * 100)}%</span>
+                      </p>
+                      <p className="text-sm text-blue-600">
+                        {avgScore >= 0.7 ? 'Great compatibility!' : 'Room for improvement'}
+                      </p>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-700 mb-3">
+                        🚀 Most In-Demand Skills
+                      </h4>
+                      <div className="space-y-2">
+                        {topSkills.slice(0, 5).map((skill, idx) => (
+                          <div key={idx} className="flex items-center justify-between bg-white rounded p-2">
+                            <span className="text-sm font-medium text-gray-700">{skill}</span>
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              {skillCounts[skill]} jobs
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div>
+                      {lowScoreMatches.length > 0 && (
+                        <div className="bg-orange-50 rounded-lg p-4 mb-4">
+                          <h4 className="font-semibold text-orange-700 mb-3">
+                            ⚡ Priority Skills
+                          </h4>
+                          <p className="text-sm text-orange-600 mb-3">
+                            Focus on these to improve {lowScoreMatches.length} lower-scoring matches:
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {[...new Set(lowScoreMatches.flatMap(match => match.job.skills_required || []))]
+                              .slice(0, 6)
+                              .map((skill, idx) => (
+                              <span key={idx} className="text-sm bg-orange-200 text-orange-800 px-3 py-1 rounded-full">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <h4 className="font-semibold text-green-800 mb-3">
+                          📝 Quick Tips
+                        </h4>
+                        <ul className="text-sm text-green-700 space-y-1">
+                          <li>• Take online courses for priority skills</li>
+                          <li>• Get certifications in high-demand areas</li>
+                          <li>• Practice skills through volunteer work</li>
+                          <li>• Update your CV with new skills</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}

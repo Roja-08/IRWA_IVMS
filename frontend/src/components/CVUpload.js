@@ -12,6 +12,21 @@ const CVUpload = () => {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
+    const [availabilityType, setAvailabilityType] = useState('weekly');
+    const [weeklyAvailability, setWeeklyAvailability] = useState([
+        { day: 'Monday', available: false, startTime: '09:00', endTime: '17:00' },
+        { day: 'Tuesday', available: false, startTime: '09:00', endTime: '17:00' },
+        { day: 'Wednesday', available: false, startTime: '09:00', endTime: '17:00' },
+        { day: 'Thursday', available: false, startTime: '09:00', endTime: '17:00' },
+        { day: 'Friday', available: false, startTime: '09:00', endTime: '17:00' },
+        { day: 'Saturday', available: false, startTime: '09:00', endTime: '17:00' },
+        { day: 'Sunday', available: false, startTime: '09:00', endTime: '17:00' }
+    ]);
+    const [monthlyAvailability, setMonthlyAvailability] = useState({
+        hoursPerWeek: 10,
+        preferredDays: 'weekends',
+        timePreference: 'flexible'
+    });
 
     const handleInputChange = (e) => {
         setFormData({
@@ -52,6 +67,30 @@ const CVUpload = () => {
             }
             uploadData.append('uploaded_by', user.username);
             console.log('Uploading with user:', user.username);
+            
+            // Add availability data
+            let availabilityData;
+            if (availabilityType === 'weekly') {
+                availabilityData = {
+                    type: 'weekly',
+                    schedule: weeklyAvailability
+                        .filter(day => day.available)
+                        .map((day, index) => ({
+                            day_of_week: weeklyAvailability.indexOf(day),
+                            start_time: day.startTime,
+                            end_time: day.endTime,
+                            status: 'available'
+                        }))
+                };
+            } else {
+                availabilityData = {
+                    type: 'monthly',
+                    hoursPerWeek: monthlyAvailability.hoursPerWeek,
+                    preferredDays: monthlyAvailability.preferredDays,
+                    timePreference: monthlyAvailability.timePreference
+                };
+            }
+            uploadData.append('availability', JSON.stringify(availabilityData));
 
             const response = await axios.post(
                 'http://localhost:8000/api/volunteers/upload-cv',
@@ -120,6 +159,9 @@ const CVUpload = () => {
                             value={formData[field]}
                             onChange={handleInputChange}
                             required={field === 'name' || field === 'email'}
+                            pattern={field === 'phone' ? '[0-9+\-\s()]{10,15}' : undefined}
+                            title={field === 'phone' ? 'Please enter a valid phone number (10-15 digits)' : undefined}
+                            placeholder={field === 'phone' ? '+1234567890 or 123-456-7890' : undefined}
                             style={{
                                 width: '100%',
                                 padding: '10px 12px',
@@ -138,6 +180,132 @@ const CVUpload = () => {
                         />
                     </div>
                 ))}
+
+                <div style={{ marginBottom: '20px' }}>
+                    <label
+                        style={{
+                            display: 'block',
+                            color: '#475569',
+                            fontWeight: '600',
+                            marginBottom: '10px'
+                        }}
+                    >
+                        Availability *
+                    </label>
+                    
+                    {/* Availability Type Selection */}
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ marginRight: '15px' }}>
+                            <input
+                                type="radio"
+                                value="weekly"
+                                checked={availabilityType === 'weekly'}
+                                onChange={(e) => setAvailabilityType(e.target.value)}
+                                style={{ marginRight: '5px' }}
+                            />
+                            Weekly Schedule
+                        </label>
+                        <label>
+                            <input
+                                type="radio"
+                                value="monthly"
+                                checked={availabilityType === 'monthly'}
+                                onChange={(e) => setAvailabilityType(e.target.value)}
+                                style={{ marginRight: '5px' }}
+                            />
+                            Monthly Commitment
+                        </label>
+                    </div>
+                    
+                    <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        {availabilityType === 'weekly' ? (
+                            // Weekly Schedule
+                            weeklyAvailability.map((day, index) => (
+                                <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={day.available}
+                                        onChange={(e) => {
+                                            const newAvailability = [...weeklyAvailability];
+                                            newAvailability[index].available = e.target.checked;
+                                            setWeeklyAvailability(newAvailability);
+                                        }}
+                                        style={{ marginRight: '8px' }}
+                                    />
+                                    <span style={{ minWidth: '80px', fontSize: '14px', fontWeight: '500' }}>{day.day}</span>
+                                    {day.available && (
+                                        <>
+                                            <input
+                                                type="time"
+                                                value={day.startTime}
+                                                onChange={(e) => {
+                                                    const newAvailability = [...weeklyAvailability];
+                                                    newAvailability[index].startTime = e.target.value;
+                                                    setWeeklyAvailability(newAvailability);
+                                                }}
+                                                style={{ padding: '4px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '12px' }}
+                                            />
+                                            <span style={{ fontSize: '12px' }}>to</span>
+                                            <input
+                                                type="time"
+                                                value={day.endTime}
+                                                onChange={(e) => {
+                                                    const newAvailability = [...weeklyAvailability];
+                                                    newAvailability[index].endTime = e.target.value;
+                                                    setWeeklyAvailability(newAvailability);
+                                                }}
+                                                style={{ padding: '4px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '12px' }}
+                                            />
+                                        </>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            // Monthly Commitment
+                            <div style={{ display: 'grid', gap: '15px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Hours per week:</label>
+                                    <select
+                                        value={monthlyAvailability.hoursPerWeek}
+                                        onChange={(e) => setMonthlyAvailability({...monthlyAvailability, hoursPerWeek: parseInt(e.target.value)})}
+                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
+                                    >
+                                        <option value={5}>5 hours/week</option>
+                                        <option value={10}>10 hours/week</option>
+                                        <option value={15}>15 hours/week</option>
+                                        <option value={20}>20 hours/week</option>
+                                        <option value={25}>25+ hours/week</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Preferred days:</label>
+                                    <select
+                                        value={monthlyAvailability.preferredDays}
+                                        onChange={(e) => setMonthlyAvailability({...monthlyAvailability, preferredDays: e.target.value})}
+                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
+                                    >
+                                        <option value="weekdays">Weekdays</option>
+                                        <option value="weekends">Weekends</option>
+                                        <option value="flexible">Flexible</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Time preference:</label>
+                                    <select
+                                        value={monthlyAvailability.timePreference}
+                                        onChange={(e) => setMonthlyAvailability({...monthlyAvailability, timePreference: e.target.value})}
+                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
+                                    >
+                                        <option value="morning">Morning (9AM-12PM)</option>
+                                        <option value="afternoon">Afternoon (12PM-5PM)</option>
+                                        <option value="evening">Evening (5PM-8PM)</option>
+                                        <option value="flexible">Flexible</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 <div style={{ marginBottom: '20px' }}>
                     <label
