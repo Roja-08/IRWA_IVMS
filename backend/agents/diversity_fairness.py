@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from .base_agent import BaseAgent
 from database import get_database
+from ml_classifier import MLTextClassifier
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ class DiversityFairnessAgent(BaseAgent):
     def __init__(self):
         super().__init__("Diversity & Fairness Agent")
         self.agent_name = "Diversity & Fairness Agent"
+        self.ml_classifier = MLTextClassifier()
     
     async def process(self, job_id: str, candidate_matches: List[Dict]) -> Dict[str, Any]:
         """Apply diversity and fairness filters to candidate matches"""
