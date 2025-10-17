@@ -291,10 +291,10 @@ const CVUpload = () => {
                     }
                 `}
             </style>
-        <div
-            style={{
+            <div
+                style={{
                     minHeight: '100vh',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
                     padding: '20px',
                     fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
                 }}
@@ -317,14 +317,14 @@ const CVUpload = () => {
                         style={{
                             width: '80px',
                             height: '80px',
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
                             borderRadius: '20px',
                             margin: '0 auto 20px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '32px',
-                            boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)'
+                            boxShadow: '0 8px 25px rgba(37, 99, 235, 0.35)'
                         }}
                     >
                         📄
@@ -335,7 +335,7 @@ const CVUpload = () => {
                             marginBottom: '8px',
                             fontSize: '32px',
                             fontWeight: '700',
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text'

@@ -5,7 +5,7 @@ const PageShell = ({ icon = '✨', title = '', subtitle = '', children }) => {
     <div
       style={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
         padding: '20px',
         fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
       }}
@@ -27,14 +27,14 @@ const PageShell = ({ icon = '✨', title = '', subtitle = '', children }) => {
             style={{
               width: '68px',
               height: '68px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
               borderRadius: '16px',
               margin: '0 auto 14px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '28px',
-              boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)'
+              boxShadow: '0 8px 25px rgba(37, 99, 235, 0.35)'
             }}
           >
             {icon}
@@ -45,7 +45,7 @@ const PageShell = ({ icon = '✨', title = '', subtitle = '', children }) => {
                 margin: 0,
                 fontSize: '28px',
                 fontWeight: 800,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text'
