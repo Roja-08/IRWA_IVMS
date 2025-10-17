@@ -138,27 +138,27 @@ const JobRetriever = () => {
             <h3 className="text-2xl font-bold text-gray-800 mb-4">
               All Jobs ({jobs.length})
             </h3>
-            <div className="max-h-[60vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-[1fr]">
+            <div className="max-h-[60vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr items-stretch content-start">
               {jobs.map((job, index) => (
                 <div
                   key={job._id || index}
                   onClick={() => setSelectedJob(job)}
                   className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer hover:border-blue-300 h-full flex flex-col"
                 >
-                  <div className="mb-3 space-y-1 min-h-[88px]">
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {job.title || "Untitled Position"}
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      <strong>Organization:</strong> {job.organization || "Not specified"}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <strong>Location:</strong> {job.location || "Not specified"}
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                    {job.title || "Untitled Position"}
+                  </h4>
+                  <p className="text-sm text-gray-600 mb-1">
+                    <strong>Organization:</strong> {job.organization || "Not specified"}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-2">
+                    <strong>Location:</strong> {job.location || "Not specified"}
+                  </p>
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 min-h-[64px] leading-6">
+                      {job.description ? job.description.substring(0, 120) + "..." : "No description"}
                     </p>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-3 min-h-[60px]">
-                    {job.description ? job.description.substring(0, 120) + "..." : "No description"}
-                  </p>
                   <div className="mt-auto flex justify-between items-center pt-2">
                     <span className="text-xs text-blue-600 font-medium">Click to view details →</span>
                     <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
