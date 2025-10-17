@@ -108,6 +108,45 @@ The backend will be available at `http://localhost:8000`
 
 The frontend will be available at `http://localhost:3000`
 
+## Quick Start (One-time setup already done)
+
+```bash
+# Backend
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+
+# Frontend (in a separate terminal)
+cd frontend
+npm install
+npm start
+```
+
+Optional helper scripts are included at repo root: `start_backend.sh`, `start_frontend.sh`.
+
+## Troubleshooting
+
+- Port already in use (backend 8000):
+  ```bash
+  lsof -ti :8000 | xargs -r kill -9
+  ```
+- Port already in use (frontend 3000):
+  ```bash
+  lsof -ti :3000 | xargs -r kill -9
+  ```
+- ESLint warnings about anchors (href="#"): replace with a `button` or a real link.
+- React warnings about missing hook deps: prefer adding the function to the dependency array or refactor to avoid stale closures.
+- Pattern escape warnings: remove unnecessary escapes in regex patterns unless strictly needed.
+
+## Recent UI Improvements
+
+- Consistent card alignment for jobs across grid/list views in `ProfessionalDashboard.js` and `JobRetriever.js` using line clamps and fixed min-heights.
+- Polished headers and backgrounds with subtle gradients.
+- `VolunteerList.js` grid made responsive with `auto-fit` and consistent card heights for the CV uploads admin view.
+- `CVUpload.js` modernized container and primary action styling.
+
 ## API Endpoints
 
 ### Job Management
