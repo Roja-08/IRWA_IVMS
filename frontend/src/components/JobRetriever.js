@@ -52,8 +52,8 @@ const JobRetriever = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-10">
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+    <div className="px-4 py-8">
+      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
         <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">
           Intelligent Volunteer Matching System
         </h1>
@@ -61,12 +61,12 @@ const JobRetriever = () => {
           Retrieve and manage job data seamlessly
         </p>
 
-        {/* Buttons */}
-        <div className="flex flex-wrap justify-center gap-4 mb-8">
+        {/* Actions */}
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-8">
           <button
             onClick={retrieveJobs}
             disabled={loading}
-            className={`px-6 py-3 rounded-xl text-white font-semibold shadow-md transition-transform transform hover:scale-105 ${
+            className={`px-6 py-3 rounded-xl text-white font-semibold shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700"
@@ -77,14 +77,14 @@ const JobRetriever = () => {
 
           <button
             onClick={fetchStoredJobs}
-            className="px-6 py-3 rounded-xl bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 transition-transform transform hover:scale-105"
+            className="px-6 py-3 rounded-xl bg-green-600 text-white font-semibold shadow-md hover:bg-green-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400"
           >
             Show All Jobs
           </button>
 
           <button
             onClick={getJobsCount}
-            className="px-6 py-3 rounded-xl bg-cyan-600 text-white font-semibold shadow-md hover:bg-cyan-700 transition-transform transform hover:scale-105"
+            className="px-6 py-3 rounded-xl bg-cyan-600 text-white font-semibold shadow-md hover:bg-cyan-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400"
           >
             Get Job Count
           </button>
@@ -138,12 +138,12 @@ const JobRetriever = () => {
             <h3 className="text-2xl font-bold text-gray-800 mb-4">
               All Jobs ({jobs.length})
             </h3>
-            <div className="max-h-[500px] overflow-y-auto grid sm:grid-cols-2 gap-4">
+            <div className="max-h-[60vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
               {jobs.map((job, index) => (
                 <div
                   key={job._id || index}
                   onClick={() => setSelectedJob(job)}
-                  className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer hover:border-blue-300"
+                  className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer hover:border-blue-300 h-full flex flex-col"
                 >
                   <h4 className="text-lg font-semibold text-gray-900 mb-2">
                     {job.title || "Untitled Position"}
@@ -154,13 +154,13 @@ const JobRetriever = () => {
                   <p className="text-sm text-gray-600 mb-2">
                     <strong>Location:</strong> {job.location || "Not specified"}
                   </p>
-                  <p className="text-sm text-gray-600 mb-3">
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-3">
                     {job.description ? job.description.substring(0, 100) + "..." : "No description"}
                   </p>
-                  <div className="flex justify-between items-center">
+                  <div className="mt-auto flex justify-between items-center pt-2">
                     <span className="text-xs text-blue-600 font-medium">Click to view details →</span>
-                    <span className="text-xs text-gray-500">
-                      {job.skills_required?.length || 0} skills required
+                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
+                      {job.skills_required?.length || 0} skills
                     </span>
                   </div>
                 </div>
@@ -169,8 +169,8 @@ const JobRetriever = () => {
 
             {/* Job Details Modal */}
             {selectedJob && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl ring-1 ring-gray-200 animate-[fadeIn_200ms_ease-out]">
                   <div className="p-6 border-b border-gray-200">
                     <div className="flex justify-between items-start">
                       <h2 className="text-2xl font-bold text-gray-900">

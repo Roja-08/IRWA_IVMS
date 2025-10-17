@@ -13,6 +13,7 @@ from database import connect_to_mongo, close_mongo_connection
 from config import API_HOST, API_PORT
 from auth import AuthService
 from agents.diversity_fairness import DiversityFairnessAgent
+from agents.skill_gap_recommender import SkillGapRecommenderAgent
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -52,6 +53,7 @@ volunteer_service = VolunteerService()
 auth_service = AuthService()
 diversity_agent = DiversityFairnessAgent()
 ml_classifier = MLTextClassifier()
+skill_gap_agent = SkillGapRecommenderAgent(top_n=10)
 
 @app.get("/")
 async def root():
@@ -479,6 +481,46 @@ async def get_job_matches(profile_id: str, apply_diversity: bool = False):
             
     except Exception as e:
         logger.error(f"Error finding matches: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/recommendations/skills")
+async def get_skill_gap_recommendations(profile_id: str, limit: int = 10):
+    """Recommend top skill gaps for a volunteer profile based on current jobs."""
+    try:
+        from database import get_database
+        db = get_database()
+
+        # Fetch profile by volunteer_id (e.g., VOL-XXXX) first, then fallback to _id
+        profile = await db.volunteer_profiles.find_one({"volunteer_id": profile_id})
+        if not profile:
+            profile = await db.volunteer_profiles.find_one({"_id": profile_id})
+        if not profile:
+            # Try ObjectId if raw string id doesn't match
+            from bson import ObjectId
+            try:
+                profile = await db.volunteer_profiles.find_one({"_id": ObjectId(profile_id)})
+            except Exception:
+                profile = None
+        if not profile:
+            raise HTTPException(status_code=404, detail="Profile not found")
+
+        # Fetch a representative set of jobs
+        jobs_cursor = db.volunteer_jobs.find({}, {"skills_required": 1}).limit(1000)
+        jobs = await jobs_cursor.to_list(length=1000)
+
+        # Run agent
+        agent = SkillGapRecommenderAgent(top_n=max(1, min(limit, 25)))
+        result = agent.recommend(profile, jobs)
+        if not result.get("success"):
+            raise HTTPException(status_code=500, detail=result.get("message", "Failed to compute recommendations"))
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in skill gap recommendations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
