@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import PageShell from "./PageShell";
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -52,14 +53,10 @@ const JobRetriever = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-10">
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-        <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">
-          Intelligent Volunteer Matching System
-        </h1>
-        <p className="text-center text-gray-500 mb-8">
-          Retrieve and manage job data seamlessly
-        </p>
+    <PageShell icon="🧰" title="Job Management" subtitle="Retrieve and manage job data seamlessly">
+      <div className="max-w-5xl mx-auto">
+        
+        
 
         {/* Buttons */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
@@ -256,7 +253,7 @@ const JobRetriever = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 };
 

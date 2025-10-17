@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import PageShell from "./PageShell";
 
 const JobMatcher = () => {
   const [profileId, setProfileId] = useState("");
@@ -38,14 +39,8 @@ const JobMatcher = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-100 py-10 px-4">
-      <div className="max-w-5xl mx-auto bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg rounded-2xl p-8">
-        <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">
-          🤖 AI Job Matcher
-        </h1>
-        <p className="text-center text-gray-500 mb-8">
-          Enter a volunteer profile ID to find the best job matches
-        </p>
+    <PageShell icon="🤖" title="AI Job Matcher" subtitle="Enter a volunteer profile ID to find the best job matches">
+      <div className="max-w-5xl mx-auto">
 
         {/* Input Section */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -366,7 +361,7 @@ const JobMatcher = () => {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   );
 };
 
