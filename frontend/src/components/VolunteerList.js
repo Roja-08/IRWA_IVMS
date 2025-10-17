@@ -1,11 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const VolunteerList = () => {
     const [volunteers, setVolunteers] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [selectedVolunteer, setSelectedVolunteer] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filteredVolunteers, setFilteredVolunteers] = useState([]);
+
+    useEffect(() => {
+        if (volunteers && searchTerm) {
+            const filtered = volunteers.filter(volunteer =>
+                volunteer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                volunteer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                volunteer.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                volunteer.skills?.some(skill => 
+                    skill.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+            );
+            setFilteredVolunteers(filtered);
+        } else {
+            setFilteredVolunteers(volunteers || []);
+        }
+    }, [volunteers, searchTerm]);
 
     const fetchVolunteers = async () => {
         setLoading(true);
@@ -13,14 +32,11 @@ const VolunteerList = () => {
 
         try {
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            console.log('Fetch user:', user);
             const params = new URLSearchParams();
             if (user.role) params.append('user_role', user.role);
             if (user.username) params.append('username', user.username);
             
-            console.log('API URL:', `http://localhost:8000/api/volunteers/all?${params}`);
             const response = await axios.get(`http://localhost:8000/api/volunteers/all?${params}`);
-            console.log('API Response:', response.data);
             setVolunteers(response.data.profiles || []);
         } catch (err) {
             setError(err.response?.data?.detail || 'Error fetching volunteers');
@@ -43,413 +59,408 @@ const VolunteerList = () => {
         }
     };
 
-    return (
-        <div className="px-4 py-8 bg-gradient-to-br from-slate-50 via-emerald-50 to-cyan-50 min-h-[calc(100vh-120px)]">
-        <div
-            style={{
-                maxWidth: '1000px',
-                margin: '0 auto',
-                padding: '30px',
-                background: '#ffffff',
-                borderRadius: '16px',
-                boxShadow: '0 16px 40px rgba(15,23,42,0.08)',
-                fontFamily: 'Inter, sans-serif',
-                border: '1px solid #e5e7eb'
-            }}
-        >
-            <h2
-                style={{
-                    textAlign: 'center',
-                    color: '#1e293b',
-                    fontSize: '28px',
-                    marginBottom: '10px'
-                }}
-            >
-                📄 CV Uploads
-            </h2>
-            <p
-                style={{
-                    textAlign: 'center',
-                    color: '#64748b',
-                    fontSize: '15px',
-                    marginBottom: '25px'
-                }}
-            >
-                {JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? 'View all CV uploads from users' : 'View your CV uploads'} 
-            </p>
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                duration: 0.6,
+                ease: "easeOut"
+            }
+        }
+    };
 
-            <div style={{ textAlign: 'center' }}>
-                <button
-                    onClick={fetchVolunteers}
-                    disabled={loading}
-                    className={`${loading ? 'opacity-80 cursor-not-allowed' : 'hover:shadow-lg hover:scale-[1.01]'} inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white text-base font-semibold transition-all shadow-md mb-8 bg-gradient-to-r from-emerald-600 to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400`}
-                >
-                    {loading ? '⏳ Loading...' : (JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? '🔍 View All CVs' : '🔍 View My CVs')}
-                </button>
+    const cardVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.5,
+                ease: "easeOut"
+            }
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
+            {/* Animated Background Elements */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-40 -right-32 w-80 h-80 bg-blue-200/20 rounded-full blur-3xl animate-float"></div>
+                <div className="absolute -bottom-40 -left-32 w-80 h-80 bg-indigo-200/20 rounded-full blur-3xl animate-float" style={{animationDelay: '1.5s'}}></div>
             </div>
 
-            {error && (
-                <div
-                    style={{
-                        backgroundColor: '#fee2e2',
-                        color: '#991b1b',
-                        padding: '12px',
-                        borderRadius: '8px',
-                        marginBottom: '20px',
-                        border: '1px solid #fecaca',
-                        textAlign: 'center'
-                    }}
-                >
-                    ❌ {error}
-                </div>
-            )}
-
-            {volunteers && volunteers.length > 0 && (
-                <div>
-                    <h3
-                        style={{
-                            color: '#0f172a',
-                            marginBottom: '20px',
-                            textAlign: 'center'
-                        }}
+            <div className="relative z-10 py-12 px-4">
+                <div className="max-w-7xl mx-auto">
+                    {/* Header Section */}
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="text-center mb-12"
                     >
-                        {volunteers.length} CV{volunteers.length !== 1 ? 's' : ''} Found
-                    </h3>
+                        <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-2xl mb-8 animate-float">
+                            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 to-indigo-700 bg-clip-text text-transparent mb-4">
+                            Volunteer Profiles
+                        </h1>
+                        <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                            {JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' 
+                                ? 'Manage and review all volunteer CV submissions' 
+                                : 'View and manage your CV submissions'}
+                        </p>
+                    </motion.div>
 
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '20px'
-                        }}
-                    >
-                        {volunteers.map((volunteer) => (
-                            <div
-                                key={volunteer._id}
-                                onClick={() => setSelectedVolunteer(volunteer)}
-                                style={{
-                                    border: '1px solid #e2e8f0',
-                                    borderRadius: '12px',
-                                    padding: '20px',
-                                    background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
-                                    boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
-                                    transition: 'all 0.2s ease',
-                                    cursor: 'pointer'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(-4px)';
-                                    e.currentTarget.style.borderColor = '#3b82f6';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.borderColor = '#e2e8f0';
-                                }}
+                    {/* Main Content Card */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 p-8">
+                        {/* Action Bar */}
+                        <div className="flex flex-col lg:flex-row gap-4 justify-between items-center mb-8">
+                            <div className="flex-1 max-w-md">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Search volunteers by name, email, location, or skills..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-xl bg-white/70 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-300"
+                                    />
+                                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                    onClick={fetchVolunteers}
+                    disabled={loading}
+                                className={`px-8 py-3 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 ${
+                                    loading
+                                        ? 'bg-gray-400 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800'
+                                }`}
                             >
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'flex-start'
-                                    }}
-                                >
-                                    <div style={{ flex: 1 }}>
-                                        <h4
-                                            style={{
-                                                margin: '0 0 10px 0',
-                                                color: '#0f172a',
-                                                fontSize: '18px'
-                                            }}
+                                {loading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Loading...</span>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        <span>
+                                            {JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' 
+                                                ? 'View All CVs' 
+                                                : 'View My CVs'}
+                                        </span>
+                                    </div>
+                                )}
+                            </motion.button>
+            </div>
+
+                        {/* Error Message */}
+            {error && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                className="bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl p-4 mb-6"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div className="text-red-700">{error}</div>
+                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Volunteers Grid */}
+                        {filteredVolunteers && filteredVolunteers.length > 0 && (
+                            <motion.div
+                                initial="hidden"
+                                animate="visible"
+                                className="space-y-6"
+                            >
+                                {/* Results Header */}
+                                <div className="flex justify-between items-center">
+                                    <h2 className="text-2xl font-bold text-gray-900">
+                                        {filteredVolunteers.length} Profile{filteredVolunteers.length !== 1 ? 's' : ''} Found
+                                        {searchTerm && ` for "${searchTerm}"`}
+                                    </h2>
+                                    {searchTerm && (
+                                        <button
+                                            onClick={() => setSearchTerm('')}
+                                            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                                         >
+                                            Clear search
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 auto-rows-fr">
+                                    {filteredVolunteers.map((volunteer, index) => (
+                                        <motion.div
+                                            key={volunteer._id}
+                                            variants={cardVariants}
+                                            custom={index}
+                                            onClick={() => setSelectedVolunteer(volunteer)}
+                                            className="group bg-white/90 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-500 cursor-pointer hover:scale-105 h-full flex flex-col relative overflow-hidden"
+                                        >
+                                            {/* Background Gradient Effect */}
+                                            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                            
+                                            <div className="relative z-10">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="flex-1 pr-4">
+                                                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors duration-300">
                                             {volunteer.name}
-                                        </h4>
-                                        <p style={{ margin: '5px 0', color: '#475569' }}>
-                                            <strong>Email:</strong> {volunteer.email}
-                                        </p>
-                                        <p style={{ margin: '5px 0', color: '#475569' }}>
-                                            <strong>Location:</strong>{' '}
-                                            {volunteer.location || 'Not specified'}
-                                        </p>
-                                        <p style={{ margin: '5px 0', color: '#475569' }}>
-                                            <strong>CV File:</strong>{' '}
-                                            {volunteer.cv_filename || 'Not uploaded'}
-                                        </p>
-                                        <p style={{ margin: '5px 0', color: '#475569' }}>
-                                            <strong>Skills Count:</strong>{' '}
-                                            {volunteer.skills?.length || 0}
-                                        </p>
-                                        <p style={{ margin: '5px 0', color: '#475569' }}>
-                                            <strong>Created:</strong>{' '}
-                                            {new Date(volunteer.created_at).toLocaleString()}
-                                        </p>
-                                        {volunteer.uploaded_by && (
-                                            <p style={{ margin: '5px 0', color: '#475569' }}>
-                                                <strong>Uploaded by:</strong> {volunteer.uploaded_by}
-                                            </p>
-                                        )}
-                                        <div style={{ marginTop: '10px', fontSize: '12px', color: '#3b82f6', fontWeight: '500' }}>
-                                            Click to view full details →
+                                                        </h3>
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-2 text-gray-600">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                </svg>
+                                                                <span>{volunteer.email}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-2 text-gray-600">
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                </svg>
+                                                                <span>{volunteer.location || 'Not specified'}</span>
+                                                            </div>
                                         </div>
                                     </div>
 
-                                    <div style={{ textAlign: 'center', minWidth: '120px' }}>
-                                        <div
+                                                    {/* Action Buttons */}
+                                                    <div className="flex flex-col gap-2 min-w-[100px]">
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 navigator.clipboard.writeText(volunteer.volunteer_id || volunteer._id);
-                                                alert('Profile ID copied to clipboard!');
-                                            }}
-                                            style={{
-                                                backgroundImage: 'linear-gradient(90deg, #6366f1, #3b82f6)',
-                                                color: 'white',
-                                                padding: '6px 10px',
-                                                borderRadius: '20px',
-                                                fontWeight: '600',
-                                                fontSize: '13px',
-                                                boxShadow: '0 6px 16px rgba(59,130,246,0.35)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease',
-                                                marginBottom: '8px'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.target.style.filter = 'brightness(1.05)';
-                                                e.target.style.transform = 'scale(1.04)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.target.style.filter = 'brightness(1)';
-                                                e.target.style.transform = 'scale(1)';
-                                            }}
-                                            title="Click to copy full Profile ID"
-                                        >
-                                            📋 Copy ID
-                                        </div>
-                                        <div
+                                                            }}
+                                                            className="px-3 py-2 bg-blue-500 text-white rounded-lg text-xs font-semibold hover:bg-blue-600 transition-colors duration-300 flex items-center gap-1"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                            </svg>
+                                                            Copy ID
+                                                        </motion.button>
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 deleteVolunteer(volunteer.volunteer_id || volunteer._id);
                                             }}
-                                            style={{
-                                                backgroundImage: 'linear-gradient(90deg, #ef4444, #f97316)',
-                                                color: 'white',
-                                                padding: '6px 10px',
-                                                borderRadius: '20px',
-                                                fontWeight: '600',
-                                                fontSize: '13px',
-                                                boxShadow: '0 6px 16px rgba(239,68,68,0.35)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.target.style.filter = 'brightness(1.05)';
-                                                e.target.style.transform = 'scale(1.04)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.target.style.filter = 'brightness(1)';
-                                                e.target.style.transform = 'scale(1)';
-                                            }}
-                                            title="Delete volunteer profile"
-                                        >
-                                            🗑️ Delete
+                                                            className="px-3 py-2 bg-red-500 text-white rounded-lg text-xs font-semibold hover:bg-red-600 transition-colors duration-300 flex items-center gap-1"
+                                                        >
+                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                            Delete
+                                                        </motion.button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Quick Stats */}
+                                                <div className="grid grid-cols-3 gap-4 mb-4">
+                                                    <div className="text-center">
+                                                        <div className="text-lg font-bold text-blue-600">{volunteer.skills?.length || 0}</div>
+                                                        <div className="text-xs text-gray-500">Skills</div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-lg font-bold text-green-600">
+                                                            {volunteer.cv_filename ? '✅' : '❌'}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">CV File</div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-xs text-gray-900 font-medium truncate" title={volunteer.volunteer_id || volunteer._id}>
+                                                            {volunteer.volunteer_id ? volunteer.volunteer_id.substring(0, 8) + '...' : volunteer._id.substring(0, 8) + '...'}
                                         </div>
-                                        <small style={{ color: '#64748b', fontSize: '11px', display: 'block', marginTop: '4px' }}>
-                                            {volunteer.volunteer_id || volunteer._id.substring(0, 8) + '...'}
-                                        </small>
+                                                        <div className="text-xs text-gray-500">Profile ID</div>
                                     </div>
                                 </div>
 
+                                                {/* Skills Preview */}
                                 {volunteer.skills && volunteer.skills.length > 0 && (
-                                    <div
-                                        style={{
-                                            marginTop: '15px',
-                                            borderTop: '1px solid #e2e8f0',
-                                            paddingTop: '10px'
-                                        }}
-                                    >
-                                        <h5
-                                            style={{
-                                                margin: '0 0 8px 0',
-                                                color: '#0f172a'
-                                            }}
-                                        >
-                                            Skills:
-                                        </h5>
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                flexWrap: 'wrap',
-                                                gap: '6px'
-                                            }}
-                                        >
-                                            {volunteer.skills.slice(0, 10).map((skill, idx) => (
+                                                    <div className="mb-4">
+                                                        <h5 className="font-semibold text-gray-700 mb-2 text-sm">Top Skills</h5>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {volunteer.skills.slice(0, 4).map((skill, idx) => (
                                                 <span
                                                     key={idx}
-                                                    style={{
-                                                        backgroundColor: '#e0f2fe',
-                                                        padding: '6px 10px',
-                                                        borderRadius: '20px',
-                                                        fontSize: '13px',
-                                                        color: '#0369a1',
-                                                        fontWeight: '500'
-                                                    }}
-                                                >
-                                                    {skill.name} ({skill.level})
+                                                                    className="bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1 rounded-full text-xs font-medium"
+                                                                >
+                                                                    {skill.name}
                                                 </span>
                                             ))}
-                                            {volunteer.skills.length > 10 && (
-                                                <span
-                                                    style={{
-                                                        color: '#64748b',
-                                                        fontSize: '13px'
-                                                    }}
-                                                >
-                                                    +{volunteer.skills.length - 10} more
+                                                            {volunteer.skills.length > 4 && (
+                                                                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
+                                                                    +{volunteer.skills.length - 4} more
                                                 </span>
                                             )}
                                         </div>
                                     </div>
                                 )}
+
+                                                {/* Footer */}
+                                                <div className="mt-auto pt-4 border-t border-gray-100">
+                                                    <div className="flex items-center justify-between text-sm">
+                                                        <div className="text-gray-500">
+                                                            Created: {new Date(volunteer.created_at).toLocaleDateString()}
+                                                        </div>
+                                                        <div className="flex items-center gap-1 text-blue-600 font-semibold group-hover:gap-2 transition-all duration-300">
+                                                            <span>View Details</span>
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </div>
                             </div>
+                                        </motion.div>
                         ))}
                     </div>
-                </div>
+                            </motion.div>
             )}
 
+                        {/* Empty State */}
             {!loading && volunteers && volunteers.length === 0 && (
-                <div
-                    style={{
-                        backgroundColor: '#fef9c3',
-                        color: '#854d0e',
-                        padding: '20px',
-                        borderRadius: '10px',
-                        border: '1px solid #fde68a',
-                        textAlign: 'center',
-                        marginTop: '20px'
-                    }}
-                >
-                    <h4 style={{ margin: '0 0 5px 0' }}>⚠️ No CVs Found</h4>
-                    <p style={{ margin: 0 }}>
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-center py-12"
+                            >
+                                <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">No CVs Found</h3>
+                                <p className="text-gray-600 mb-4">
                         {JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' 
-                            ? 'No CV uploads found in the system.' 
+                                        ? 'No volunteer profiles found in the system.' 
                             : 'You haven\'t uploaded any CVs yet.'}
                     </p>
+                                <button
+                                    onClick={fetchVolunteers}
+                                    className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-300"
+                                >
+                                    Refresh
+                                </button>
+                            </motion.div>
+                        )}
+                    </div>
                 </div>
-            )}
+            </div>
 
             {/* Volunteer Details Modal */}
+            <AnimatePresence>
             {selectedVolunteer && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '20px',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '16px',
-                        maxWidth: '800px',
-                        width: '100%',
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
-                        boxShadow: '0 30px 80px rgba(15,23,42,0.45)'
-                    }}>
-                        <div style={{
-                            padding: '24px',
-                            borderBottom: '1px solid #e2e8f0',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
-                            <h2 style={{ margin: 0, fontSize: '24px', color: '#0f172a' }}>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+                        >
+                            <div className="sticky top-0 bg-white border-b border-gray-200 rounded-t-3xl p-6 flex justify-between items-center">
+                                <h2 className="text-3xl font-bold text-gray-900">
                                 {selectedVolunteer.name}
                             </h2>
                             <button
                                 onClick={() => setSelectedVolunteer(null)}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    fontSize: '24px',
-                                    cursor: 'pointer',
-                                    color: '#64748b',
-                                    padding: '4px'
-                                }}
-                            >
-                                ×
+                                    className="text-gray-500 hover:text-gray-700 text-2xl font-bold transition-colors duration-300 p-2 hover:bg-gray-100 rounded-xl"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
                             </button>
                         </div>
                         
-                        <div style={{ padding: '24px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-                                <div>
-                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Contact Information</h3>
-                                    <div style={{ space: '8px' }}>
-                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Email:</strong> {selectedVolunteer.email}</p>
-                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Phone:</strong> {selectedVolunteer.phone || 'Not provided'}</p>
-                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Location:</strong> {selectedVolunteer.location || 'Not specified'}</p>
+                            <div className="p-8 space-y-8">
+                                {/* Contact & Profile Info */}
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="bg-gray-50 rounded-2xl p-6">
+                                        <h3 className="font-semibold text-gray-700 mb-4 text-lg">Contact Information</h3>
+                                        <div className="space-y-3">
+                                            <p className="text-gray-900"><strong>Email:</strong> {selectedVolunteer.email}</p>
+                                            <p className="text-gray-900"><strong>Phone:</strong> {selectedVolunteer.phone || 'Not provided'}</p>
+                                            <p className="text-gray-900"><strong>Location:</strong> {selectedVolunteer.location || 'Not specified'}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-gray-50 rounded-2xl p-6">
+                                        <h3 className="font-semibold text-gray-700 mb-4 text-lg">Profile Information</h3>
+                                        <div className="space-y-3">
+                                            <p className="text-gray-900"><strong>Profile ID:</strong> {selectedVolunteer.volunteer_id || selectedVolunteer._id}</p>
+                                            <p className="text-gray-900"><strong>CV File:</strong> {selectedVolunteer.cv_filename || 'Not uploaded'}</p>
+                                            <p className="text-gray-900"><strong>Created:</strong> {new Date(selectedVolunteer.created_at).toLocaleString()}</p>
+                                            {selectedVolunteer.uploaded_by && (
+                                                <p className="text-gray-900"><strong>Uploaded by:</strong> {selectedVolunteer.uploaded_by}</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <div>
-                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Profile Information</h3>
-                                    <div>
-                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Profile ID:</strong> {selectedVolunteer.volunteer_id || selectedVolunteer._id}</p>
-                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>CV File:</strong> {selectedVolunteer.cv_filename || 'Not uploaded'}</p>
-                                        <p style={{ margin: '8px 0', color: '#475569' }}><strong>Created:</strong> {new Date(selectedVolunteer.created_at).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {selectedVolunteer.experience_summary && (
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Experience Summary</h3>
-                                    <p style={{ color: '#475569', lineHeight: '1.6' }}>{selectedVolunteer.experience_summary}</p>
+                                {/* Experience Summary */}
+                                {selectedVolunteer.experience_summary && (
+                                    <div className="bg-blue-50 rounded-2xl p-6">
+                                        <h3 className="font-semibold text-blue-700 mb-4 text-lg">Experience Summary</h3>
+                                        <p className="text-blue-900 leading-relaxed">{selectedVolunteer.experience_summary}</p>
                                 </div>
                             )}
                             
+                                {/* Skills */}
                             {selectedVolunteer.skills && selectedVolunteer.skills.length > 0 && (
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Skills ({selectedVolunteer.skills.length})</h3>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    <div className="bg-white border border-gray-200 rounded-2xl p-6">
+                                        <h3 className="font-semibold text-gray-700 mb-4 text-lg">Skills & Expertise</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {selectedVolunteer.skills.map((skill, idx) => (
-                                            <span
-                                                key={idx}
-                                                style={{
-                                                    backgroundColor: '#e0f2fe',
-                                                    padding: '8px 12px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '14px',
-                                                    color: '#0369a1',
-                                                    fontWeight: '500'
-                                                }}
-                                            >
-                                                {skill.name} ({skill.level})
-                                                {skill.years_experience && ` - ${skill.years_experience} years`}
+                                                <div key={idx} className="bg-gray-50 rounded-xl p-4">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className="font-semibold text-gray-900">{skill.name}</span>
+                                                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                                            {skill.level}
                                             </span>
+                                                    </div>
+                                                    {skill.years_experience && (
+                                                        <p className="text-sm text-gray-600">
+                                                            {skill.years_experience} years experience
+                                                        </p>
+                                                    )}
+                                                </div>
                                         ))}
                                     </div>
                                 </div>
                             )}
                             
+                                {/* Interests */}
                             {selectedVolunteer.interests && selectedVolunteer.interests.length > 0 && (
-                                <div style={{ marginBottom: '24px' }}>
-                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Interests</h3>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    <div className="bg-green-50 rounded-2xl p-6">
+                                        <h3 className="font-semibold text-green-700 mb-4 text-lg">Areas of Interest</h3>
+                                        <div className="flex flex-wrap gap-2">
                                         {selectedVolunteer.interests.map((interest, idx) => (
                                             <span
                                                 key={idx}
-                                                style={{
-                                                    backgroundColor: '#f0fdf4',
-                                                    padding: '6px 12px',
-                                                    borderRadius: '16px',
-                                                    fontSize: '14px',
-                                                    color: '#166534',
-                                                    border: '1px solid #bbf7d0'
-                                                }}
+                                                    className="bg-green-100 text-green-800 border border-green-200 px-3 py-2 rounded-xl text-sm font-medium"
                                             >
                                                 {interest}
                                             </span>
@@ -458,20 +469,26 @@ const VolunteerList = () => {
                                 </div>
                             )}
                             
+                                {/* Availability */}
                             {selectedVolunteer.availability && selectedVolunteer.availability.length > 0 && (
-                                <div>
-                                    <h3 style={{ margin: '0 0 12px 0', color: '#0f172a', fontSize: '18px' }}>Availability</h3>
-                                    <div style={{ display: 'grid', gap: '8px' }}>
+                                    <div className="bg-purple-50 rounded-2xl p-6">
+                                        <h3 className="font-semibold text-purple-700 mb-4 text-lg">Availability Schedule</h3>
+                                        <div className="grid gap-3">
                                         {selectedVolunteer.availability.map((slot, idx) => {
                                             const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
                                             return (
-                                                <div key={idx} style={{
-                                                    padding: '12px',
-                                                    backgroundColor: slot.status === 'available' ? '#f0fdf4' : '#fef3c7',
-                                                    borderRadius: '8px',
-                                                    border: `1px solid ${slot.status === 'available' ? '#bbf7d0' : '#fde68a'}`
-                                                }}>
-                                                    <span style={{ fontWeight: '500' }}>{days[slot.day_of_week]}:</span> {slot.start_time} - {slot.end_time} ({slot.status})
+                                                    <div key={idx} className={`p-4 rounded-xl border ${
+                                                        slot.status === 'available' 
+                                                            ? 'bg-green-100 border-green-200 text-green-800' 
+                                                            : 'bg-yellow-100 border-yellow-200 text-yellow-800'
+                                                    }`}>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold">{days[slot.day_of_week]}</span>
+                                                            <span className="text-sm capitalize">{slot.status}</span>
+                                                        </div>
+                                                        <div className="text-sm mt-1">
+                                                            {slot.start_time} - {slot.end_time}
+                                                        </div>
                                                 </div>
                                             );
                                         })}
@@ -479,10 +496,21 @@ const VolunteerList = () => {
                                 </div>
                             )}
                         </div>
-                    </div>
-                </div>
-            )}
-        </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Add CSS animations */}
+            <style jsx>{`
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px); }
+                    50% { transform: translateY(-10px); }
+                }
+                .animate-float {
+                    animation: float 3s ease-in-out infinite;
+                }
+            `}</style>
         </div>
     );
 };

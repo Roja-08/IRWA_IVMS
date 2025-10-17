@@ -35,6 +35,86 @@ const CVUpload = () => {
         preferredDays: 'weekends',
         timePreference: 'flexible'
     });
+    const [filePreview, setFilePreview] = useState(null);
+    const canvasRef = useRef(null);
+
+    // Animated background effect
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        let animationFrameId;
+
+        const resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 120 + 80;
+                this.color = `hsla(${210 + Math.random() * 30}, 60%, ${50 + Math.random() * 10}%, ${0.03 + Math.random() * 0.02})`;
+                this.originalSize = this.size;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < -this.size || this.x > canvas.width + this.size || 
+                    this.y < -this.size || this.y > canvas.height + this.size) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.size
+                );
+                gradient.addColorStop(0, this.color);
+                gradient.addColorStop(1, 'transparent');
+                
+                ctx.fillStyle = gradient;
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const particles = Array.from({ length: 12 }, () => new Particle());
+
+        const animate = () => {
+            ctx.fillStyle = 'rgb(248, 250, 252)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+
+            animationFrameId = requestAnimationFrame(animate);
+        };
+
+        animate();
+
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', resizeCanvas);
+        };
+    }, []);
 
     const handleInputChange = (e) => {
         setFormData({
@@ -44,7 +124,18 @@ const CVUpload = () => {
     };
 
     const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
+        const selectedFile = e.target.files[0];
+        setFile(selectedFile);
+        
+        if (selectedFile) {
+            setFilePreview({
+                name: selectedFile.name,
+                size: (selectedFile.size / 1024 / 1024).toFixed(2),
+                type: selectedFile.type.split('/')[1]?.toUpperCase() || 'FILE'
+            });
+        } else {
+            setFilePreview(null);
+        }
     };
 
     const placeOrMoveMarker = (L, lat, lng) => {
@@ -89,7 +180,6 @@ const CVUpload = () => {
             );
             const results = await resp.json();
             if (Array.isArray(results) && results.length > 0) {
-                // eslint-disable-next-line no-undef
                 const L = window.L;
                 const r = results[0];
                 const lat = parseFloat(r.lat);
@@ -123,7 +213,6 @@ const CVUpload = () => {
             const { latitude, longitude } = position.coords;
 
             if (showLocationPicker) {
-                // eslint-disable-next-line no-undef
                 const L = window.L;
                 setTempCoords({ lat: latitude, lon: longitude });
                 placeOrMoveMarker(L, latitude, longitude);
@@ -133,8 +222,7 @@ const CVUpload = () => {
                 setFormData({ ...formData, location: display });
             }
         } catch (err) {
-            const message = err?.message || 'Unable to fetch your location';
-            setError(message);
+            setError(err?.message || 'Unable to fetch your location');
         } finally {
             setLocating(false);
         }
@@ -171,7 +259,6 @@ const CVUpload = () => {
         const initMap = async () => {
             try {
                 await ensureLeafletLoaded();
-                // eslint-disable-next-line no-undef
                 const L = window.L;
                 if (!mapRef.current) return;
 
@@ -199,7 +286,7 @@ const CVUpload = () => {
         };
 
         initMap();
-    }, [showLocationPicker]);
+    }, [showLocationPicker, formData.location]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -222,15 +309,12 @@ const CVUpload = () => {
             uploadData.append('location', formData.location);
             
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            console.log('Upload user:', user);
             if (!user.username) {
                 setError('Please login to upload CV');
                 return;
             }
             uploadData.append('uploaded_by', user.username);
-            console.log('Uploading with user:', user.username);
             
-            // Add availability data
             let availabilityData;
             if (availabilityType === 'weekly') {
                 availabilityData = {
@@ -273,45 +357,51 @@ const CVUpload = () => {
     };
 
     return (
-        <div className="px-4 py-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-[calc(100vh-120px)]">
-        <div
-            style={{
-                maxWidth: '650px',
-                margin: '0 auto',
-                padding: '30px',
-                background: '#ffffff',
-                borderRadius: '16px',
-                boxShadow: '0 16px 40px rgba(15,23,42,0.08)',
-                fontFamily: 'Inter, sans-serif',
-                border: '1px solid #e5e7eb'
-            }}
-        >
-            <h2
-                style={{
-                    textAlign: 'center',
-                    color: '#1e293b',
-                    marginBottom: '25px',
-                    fontSize: '26px'
-                }}
-            >
-                📄 Upload Your CV
-            </h2>
+        <div className="min-h-screen bg-slate-50 relative overflow-hidden">
+            {/* Animated smoke background */}
+            <canvas
+                ref={canvasRef}
+                className="absolute inset-0 w-full h-full pointer-events-none"
+            />
+            
+            {/* Main content */}
+            <div className="relative z-10 py-12 px-4">
+                <div className="max-w-4xl mx-auto">
+                    {/* Header */}
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-2xl mb-6">
+                            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                            Professional Profile Submission
+                        </h1>
+                        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                            Upload your CV to join our network of professionals and discover meaningful opportunities
+                        </p>
+                    </div>
 
-            <form onSubmit={handleSubmit}>
+                    {/* Main form card */}
+                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+                        <div className="p-8">
+                            <form onSubmit={handleSubmit} className="space-y-8">
+                                {/* Personal Information Grid */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {['name', 'email', 'phone', 'location'].map((field, index) => (
-                    <div key={index} style={{ marginBottom: '18px' }}>
-                        <label
-                            style={{
-                                display: 'block',
-                                color: '#475569',
-                                fontWeight: '600',
-                                marginBottom: '6px'
-                            }}
-                        >
-                            {field.charAt(0).toUpperCase() + field.slice(1)}{' '}
-                            {field === 'name' || field === 'email' ? '*' : ''}
+                                        <div 
+                                            key={field}
+                                            className={`transform transition-all duration-300 ${
+                                                field === 'name' || field === 'email' ? 'lg:col-span-2' : ''
+                                            }`}
+                                        >
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                {field.charAt(0).toUpperCase() + field.slice(1)}
+                                                {(field === 'name' || field === 'email') && (
+                                                    <span className="text-red-500 ml-1">*</span>
+                                                )}
                         </label>
-                        <div style={{ position: 'relative' }}>
+                                            <div className="relative">
                             <input
                                 type={
                                     field === 'email'
@@ -324,93 +414,95 @@ const CVUpload = () => {
                                 value={formData[field]}
                                 onChange={handleInputChange}
                                 required={field === 'name' || field === 'email'}
-                                pattern={field === 'phone' ? '[0-9+\-\s()]\{10,15\}' : undefined}
+                                                    pattern={field === 'phone' ? '[0-9+\-\\s()]{10,15}' : undefined}
                                 title={field === 'phone' ? 'Please enter a valid phone number (10-15 digits)' : undefined}
-                                placeholder={field === 'phone' ? '+1234567890 or 123-456-7890' : undefined}
-                                style={{
-                                    width: '100%',
-                                    padding: field === 'location' ? '10px 64px 10px 12px' : '10px 12px',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '8px',
-                                    fontSize: '15px',
-                                    outline: 'none',
-                                    transition: 'all 0.2s ease',
-                                }}
-                                onFocus={(e) =>
-                                    (e.target.style.borderColor = '#3b82f6')
-                                }
-                                onBlur={(e) =>
-                                    (e.target.style.borderColor = '#d1d5db')
-                                }
+                                                    placeholder={
+                                                        field === 'name' ? 'John Doe' :
+                                                        field === 'email' ? 'john.doe@example.com' :
+                                                        field === 'phone' ? '+1 (555) 123-4567' :
+                                                        'City, State, Country'
+                                                    }
+                                                    className="w-full px-4 py-3.5 bg-white/70 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 placeholder-gray-400"
                             />
                             {field === 'location' && (
-                                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '6px' }}>
+                                                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-2">
                                     <button
                                         type="button"
-                                        aria-label="Detect my location"
-                                        title="Detect my location"
                                         onClick={handleUseMyLocation}
                                         disabled={locating}
-                                        style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#0f172a', borderRadius: '6px', padding: '4px 6px', cursor: locating ? 'not-allowed' : 'pointer' }}
-                                    >
-                                        📶
+                                                            className="p-2 bg-gray-100 hover:bg-blue-50 border border-gray-200 rounded-lg transition-all duration-300 hover:scale-110 disabled:opacity-50"
+                                                            title="Use current location"
+                                                        >
+                                                            {locating ? (
+                                                                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                            ) : (
+                                                                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                </svg>
+                                                            )}
                                     </button>
                                     <button
                                         type="button"
-                                        aria-label="Pick location on map"
+                                                            onClick={() => { setSearchQuery(formData.location || ''); setShowLocationPicker(true); }}
+                                                            className="p-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-300 hover:scale-110"
                                         title="Pick location on map"
-                                        onClick={() => { setSearchQuery(formData.location || ''); setShowLocationPicker(true); }}
-                                        style={{ background: '#e0f2fe', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '6px', padding: '4px 6px', cursor: 'pointer' }}
                                     >
-                                        🗺️
+                                                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                                            </svg>
                                     </button>
                                 </div>
                             )}
                         </div>
                     </div>
                 ))}
+                                </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                    <label
-                        style={{
-                            display: 'block',
-                            color: '#475569',
-                            fontWeight: '600',
-                            marginBottom: '10px'
-                        }}
-                    >
-                        Availability *
-                    </label>
-                    
-                    {/* Availability Type Selection */}
-                    <div style={{ marginBottom: '15px' }}>
-                        <label style={{ marginRight: '15px' }}>
-                            <input
-                                type="radio"
-                                value="weekly"
-                                checked={availabilityType === 'weekly'}
-                                onChange={(e) => setAvailabilityType(e.target.value)}
-                                style={{ marginRight: '5px' }}
-                            />
-                            Weekly Schedule
-                        </label>
-                        <label>
-                            <input
-                                type="radio"
-                                value="monthly"
-                                checked={availabilityType === 'monthly'}
-                                onChange={(e) => setAvailabilityType(e.target.value)}
-                                style={{ marginRight: '5px' }}
-                            />
-                            Monthly Commitment
-                        </label>
+                                {/* Availability Section */}
+                                <div className="bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-2xl p-6 border border-gray-100">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900">Availability Preferences</h3>
+                                            <p className="text-sm text-gray-600">Tell us about your preferred working schedule</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Availability Type Toggle */}
+                                    <div className="flex gap-4 mb-6">
+                                        {[
+                                            { value: 'weekly', label: 'Weekly Schedule', icon: '📅' },
+                                            { value: 'monthly', label: 'Monthly Commitment', icon: '⏱️' }
+                                        ].map((option) => (
+                                            <button
+                                                key={option.value}
+                                                type="button"
+                                                onClick={() => setAvailabilityType(option.value)}
+                                                className={`flex-1 flex items-center gap-3 p-4 rounded-xl border-2 transition-all duration-300 ${
+                                                    availabilityType === option.value 
+                                                        ? 'border-blue-500 bg-blue-50 shadow-md' 
+                                                        : 'border-gray-200 bg-white hover:border-gray-300'
+                                                }`}
+                                            >
+                                                <span className="text-xl">{option.icon}</span>
+                                                <span className="font-medium text-gray-800">{option.label}</span>
+                                            </button>
+                                        ))}
                     </div>
                     
-                    <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                    {/* Availability Content */}
+                                    <div className="bg-white rounded-xl p-6 border border-gray-200">
                         {availabilityType === 'weekly' ? (
-                            // Weekly Schedule
-                            weeklyAvailability.map((day, index) => (
-                                <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+                                            <div className="space-y-4">
+                                                {weeklyAvailability.map((day, index) => (
+                                                    <div key={day.day} className="flex items-center gap-4 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors duration-300">
+                                                        <label className="flex items-center gap-4 flex-1 cursor-pointer">
+                                                            <div className="relative">
                                     <input
                                         type="checkbox"
                                         checked={day.available}
@@ -419,11 +511,24 @@ const CVUpload = () => {
                                             newAvailability[index].available = e.target.checked;
                                             setWeeklyAvailability(newAvailability);
                                         }}
-                                        style={{ marginRight: '8px' }}
-                                    />
-                                    <span style={{ minWidth: '80px', fontSize: '14px', fontWeight: '500' }}>{day.day}</span>
+                                                                    className="sr-only"
+                                                                />
+                                                                <div className={`w-5 h-5 border-2 rounded transition-all duration-300 ${
+                                                                    day.available 
+                                                                        ? 'bg-blue-500 border-blue-500' 
+                                                                        : 'border-gray-300'
+                                                                }`}>
+                                                                    {day.available && (
+                                                                        <svg className="w-3 h-3 text-white mx-auto mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                                        </svg>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            <span className="font-medium text-gray-700 min-w-[100px]">{day.day}</span>
+                                                        </label>
                                     {day.available && (
-                                        <>
+                                                            <div className="flex items-center gap-3 flex-1">
                                             <input
                                                 type="time"
                                                 value={day.startTime}
@@ -432,9 +537,9 @@ const CVUpload = () => {
                                                     newAvailability[index].startTime = e.target.value;
                                                     setWeeklyAvailability(newAvailability);
                                                 }}
-                                                style={{ padding: '4px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '12px' }}
+                                                                    className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-300"
                                             />
-                                            <span style={{ fontSize: '12px' }}>to</span>
+                                                                <span className="text-gray-500 text-sm">to</span>
                                             <input
                                                 type="time"
                                                 value={day.endTime}
@@ -443,135 +548,178 @@ const CVUpload = () => {
                                                     newAvailability[index].endTime = e.target.value;
                                                     setWeeklyAvailability(newAvailability);
                                                 }}
-                                                style={{ padding: '4px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '12px' }}
+                                                                    className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-300"
                                             />
-                                        </>
+                                                            </div>
                                     )}
                                 </div>
-                            ))
-                        ) : (
-                            // Monthly Commitment
-                            <div style={{ display: 'grid', gap: '15px' }}>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Hours per week:</label>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                {[
+                                                    {
+                                                        label: 'Hours Per Week',
+                                                        value: monthlyAvailability.hoursPerWeek,
+                                                        options: [5, 10, 15, 20, 25],
+                                                        icon: '⏰'
+                                                    },
+                                                    {
+                                                        label: 'Preferred Days',
+                                                        value: monthlyAvailability.preferredDays,
+                                                        options: ['weekdays', 'weekends', 'flexible'],
+                                                        icon: '📅'
+                                                    },
+                                                    {
+                                                        label: 'Time Preference',
+                                                        value: monthlyAvailability.timePreference,
+                                                        options: ['morning', 'afternoon', 'evening', 'flexible'],
+                                                        icon: '🌅'
+                                                    }
+                                                ].map((field, index) => (
+                                                    <div key={field.label}>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                                                            <span className="mr-2">{field.icon}</span>
+                                                            {field.label}
+                                                        </label>
                                     <select
-                                        value={monthlyAvailability.hoursPerWeek}
-                                        onChange={(e) => setMonthlyAvailability({...monthlyAvailability, hoursPerWeek: parseInt(e.target.value)})}
-                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
-                                    >
-                                        <option value={5}>5 hours/week</option>
-                                        <option value={10}>10 hours/week</option>
-                                        <option value={15}>15 hours/week</option>
-                                        <option value={20}>20 hours/week</option>
-                                        <option value={25}>25+ hours/week</option>
+                                                            value={field.value}
+                                                            onChange={(e) => {
+                                                                const newAvailability = {...monthlyAvailability};
+                                                                newAvailability[field.label.toLowerCase().includes('hours') ? 'hoursPerWeek' : 
+                                                                field.label.toLowerCase().includes('days') ? 'preferredDays' : 'timePreference'] = 
+                                                                field.label.toLowerCase().includes('hours') ? parseInt(e.target.value) : e.target.value;
+                                                                setMonthlyAvailability(newAvailability);
+                                                            }}
+                                                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-300"
+                                                        >
+                                                            {field.options.map(option => (
+                                                                <option key={option} value={option}>
+                                                                    {typeof option === 'number' ? `${option} hours` : 
+                                                                     option.charAt(0).toUpperCase() + option.slice(1)}
+                                                                </option>
+                                                            ))}
                                     </select>
                                 </div>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Preferred days:</label>
-                                    <select
-                                        value={monthlyAvailability.preferredDays}
-                                        onChange={(e) => setMonthlyAvailability({...monthlyAvailability, preferredDays: e.target.value})}
-                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
-                                    >
-                                        <option value="weekdays">Weekdays</option>
-                                        <option value="weekends">Weekends</option>
-                                        <option value="flexible">Flexible</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Time preference:</label>
-                                    <select
-                                        value={monthlyAvailability.timePreference}
-                                        onChange={(e) => setMonthlyAvailability({...monthlyAvailability, timePreference: e.target.value})}
-                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
-                                    >
-                                        <option value="morning">Morning (9AM-12PM)</option>
-                                        <option value="afternoon">Afternoon (12PM-5PM)</option>
-                                        <option value="evening">Evening (5PM-8PM)</option>
-                                        <option value="flexible">Flexible</option>
-                                    </select>
-                                </div>
+                                                ))}
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                    <label
-                        style={{
-                            display: 'block',
-                            color: '#475569',
-                            fontWeight: '600',
-                            marginBottom: '6px'
-                        }}
-                    >
-                        CV File (PDF, DOCX, TXT) *
-                    </label>
+                                {/* File Upload Section */}
+                                <div className="bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-2xl p-6 border border-gray-100">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900">Curriculum Vitae</h3>
+                                            <p className="text-sm text-gray-600">Upload your professional CV document</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <label className="block">
                     <input
                         type="file"
                         onChange={handleFileChange}
                         accept=".pdf,.docx,.txt"
                         required
-                        style={{
-                            width: '100%',
-                            padding: '10px',
-                            border: '1px dashed #93c5fd',
-                            backgroundColor: '#f0f9ff',
-                            borderRadius: '8px',
-                            cursor: 'pointer'
-                        }}
-                    />
+                                                className="hidden"
+                                            />
+                                            <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 hover:border-blue-400 hover:bg-blue-50/20 group">
+                                                <div className="text-3xl mb-4 text-gray-400 group-hover:text-blue-500 transition-colors duration-300">📄</div>
+                                                <div className="text-gray-700 font-medium mb-2">
+                                                    {filePreview ? filePreview.name : 'Click to upload your CV'}
+                                                </div>
+                                                <div className="text-gray-500 text-sm">
+                                                    {filePreview ? `${filePreview.size} MB • ${filePreview.type}` : 'Supported formats: PDF, DOCX, TXT (Max 10MB)'}
+                                                </div>
+                                            </div>
+                                        </label>
+                                        
+                                        {filePreview && (
+                                            <div className="bg-green-50 border border-green-200 rounded-xl p-4 animate-fadeIn">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="font-medium text-green-800">Document Ready</div>
+                                                        <div className="text-sm text-green-600">{filePreview.name}</div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setFile(null);
+                                                            setFilePreview(null);
+                                                        }}
+                                                        className="text-gray-400 hover:text-red-500 transition-colors duration-300 p-1"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                 </div>
 
+                                {/* Submit Button */}
                 <button
                     type="submit"
                     disabled={loading}
-                    className={`${loading ? 'opacity-80 cursor-not-allowed' : 'hover:shadow-lg hover:scale-[1.01]'} w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 text-base rounded-xl transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400`}
-                >
-                    {loading ? 'Processing...' : '🚀 Upload CV'}
+                                    className={`w-full py-4 px-6 rounded-xl font-semibold text-white transition-all duration-500 transform ${
+                                        loading 
+                                            ? 'bg-gray-400 cursor-not-allowed' 
+                                            : 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-xl active:scale-95'
+                                    } relative overflow-hidden group`}
+                                >
+                                    <div className="relative z-10 flex items-center justify-center gap-3">
+                                        {loading ? (
+                                            <>
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                <span>Processing Your Submission...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                                <span>Submit Professional Profile</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    {!loading && (
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 transform translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                    )}
                 </button>
             </form>
 
+                            {/* Location Picker Modal */}
             {showLocationPicker && (
-                <div
-                    role="dialog"
-                    aria-modal="true"
-                    style={{
-                        position: 'fixed',
-                        inset: 0,
-                        backgroundColor: 'rgba(0,0,0,0.4)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000
-                    }}
-                    onClick={() => setShowLocationPicker(false)}
-                >
-                    <div
-                        style={{
-                            background: '#fff',
-                            borderRadius: '12px',
-                            width: 'min(92vw, 720px)',
-                            maxHeight: '85vh',
-                            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-                            overflow: 'hidden',
-                            display: 'flex',
-                            flexDirection: 'column'
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div style={{ padding: '12px 16px', borderBottom: '1px solid #e5e7eb', display: 'flex', gap: '8px' }}>
+                                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-scaleIn">
+                                        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                                            <div className="flex gap-3">
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search location (city, address)"
-                                style={{ flex: 1, padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: '8px' }}
+                                                    placeholder="Search for a location..."
+                                                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                                    onKeyPress={(e) => e.key === 'Enter' && forwardGeocode(searchQuery)}
                             />
                             <button
                                 type="button"
                                 onClick={() => forwardGeocode(searchQuery)}
-                                style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer' }}
+                                                    className="px-6 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-300"
                             >
                                 Search
                             </button>
@@ -579,149 +727,175 @@ const CVUpload = () => {
                                 type="button"
                                 onClick={handleUseMyLocation}
                                 disabled={locating}
-                                style={{ background: locating ? '#93c5fd' : '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: '8px', padding: '8px 12px', cursor: locating ? 'not-allowed' : 'pointer' }}
-                            >
-                                {locating ? 'Detecting…' : 'Use my location'}
+                                                    className="px-6 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 disabled:bg-gray-100 transition-colors duration-300 flex items-center gap-2"
+                                                >
+                                                    {locating ? (
+                                                        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                                    ) : (
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        </svg>
+                                                    )}
+                                                    My Location
                             </button>
                         </div>
-                        <div style={{ height: '420px' }}>
-                            <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+                                        </div>
+                                        <div className="h-96">
+                                            <div ref={mapRef} className="w-full h-full" />
+                                        </div>
+                                        <div className="p-6 border-t border-gray-200 bg-white">
+                                            <div className="flex items-center justify-between">
+                                                <div className="text-gray-700">
+                                                    {tempAddress ? (
+                                                        <div>
+                                                            <div className="font-medium text-sm text-gray-500">Selected Location</div>
+                                                            <div className="text-blue-600 font-medium">{tempAddress}</div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-gray-500">Click on the map to select a location</div>
+                                                    )}
                         </div>
-                        <div style={{ padding: '10px 16px', borderTop: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                            <div style={{ color: '#475569', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {tempAddress ? `Selected: ${tempAddress}` : 'Click on the map to select a location'}
+                                                <div className="flex gap-3">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setShowLocationPicker(false)}
+                                                        className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors duration-300 font-medium"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => { 
+                                                            if (tempAddress) { 
+                                                                setFormData({ ...formData, location: tempAddress }); 
+                                                            } 
+                                                            setShowLocationPicker(false); 
+                                                        }} 
+                                                        disabled={!tempAddress}
+                                                        className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-300"
+                                                    >
+                                                        Confirm Location
+                                                    </button>
                             </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <button type="button" onClick={() => setShowLocationPicker(false)} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#0f172a', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer' }}>Cancel</button>
-                                <button type="button" onClick={() => { if (tempAddress) { setFormData({ ...formData, location: tempAddress }); } setShowLocationPicker(false); }} disabled={!tempAddress} style={{ background: !tempAddress ? '#93c5fd' : '#10b981', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: !tempAddress ? 'not-allowed' : 'pointer' }}>Set</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
 
+                            {/* Error Message */}
             {error && (
-                <div
-                    style={{
-                        backgroundColor: '#fee2e2',
-                        color: '#991b1b',
-                        padding: '12px',
-                        borderRadius: '8px',
-                        marginTop: '20px',
-                        border: '1px solid #fecaca',
-                        textAlign: 'center'
-                    }}
-                >
-                    ❌ {error}
+                                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 animate-fadeIn">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <div className="font-medium">Submission Error</div>
+                                            <div>{error}</div>
+                                        </div>
+                                    </div>
                 </div>
             )}
 
+                            {/* Success Result */}
             {result && (
-                <div
-                    style={{
-                        backgroundColor: '#ecfdf5',
-                        color: '#065f46',
-                        padding: '20px',
-                        borderRadius: '12px',
-                        marginTop: '25px',
-                        border: '1px solid #a7f3d0',
-                        boxShadow: 'inset 0 0 10px rgba(16,185,129,0.1)'
-                    }}
-                >
-                    <h3
-                        style={{
-                            marginTop: 0,
-                            marginBottom: '10px',
-                            textAlign: 'center'
-                        }}
-                    >
-                        ✅ CV Processed Successfully!
+                                <div className="mt-6 bg-gradient-to-br from-green-50 to-emerald-100 border border-green-200 rounded-2xl p-8 animate-fadeIn">
+                                    <div className="text-center mb-8">
+                                        <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                                            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                                            Profile Successfully Created
                     </h3>
+                                        <p className="text-gray-600 text-lg">
+                                            Your professional profile has been processed and added to our network
+                                        </p>
+                                    </div>
 
-                    <div
-                        style={{
-                            backgroundColor: '#d1fae5',
-                            padding: '15px',
-                            borderRadius: '10px',
-                            marginBottom: '15px',
-                            textAlign: 'center',
-                            border: '1px solid #6ee7b7'
-                        }}
-                    >
-                        <h4
-                            style={{
-                                margin: 0,
-                                color: '#064e3b',
-                                fontWeight: '600'
-                            }}
-                        >
-                            Your Unique Profile ID:
-                        </h4>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '4px' }}>
-                            <p
-                                style={{
-                                    margin: 0,
-                                    fontSize: '20px',
-                                    fontWeight: 'bold',
-                                    fontFamily: 'monospace',
-                                    color: '#065f46'
-                                }}
-                            >
+                                    {/* Profile ID Card */}
+                                    <div className="bg-white rounded-xl p-6 border border-green-200 mb-6 shadow-sm">
+                                        <div className="text-center">
+                                            <div className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wider">
+                                                Your Professional Profile ID
+                                            </div>
+                                            <div className="flex items-center justify-center gap-4 mb-4">
+                                                <code className="text-2xl font-bold text-gray-900 font-mono bg-gray-50 px-6 py-3 rounded-lg border">
                                 {result.profile_id}
-                            </p>
+                                                </code>
                             <button
                                 type="button"
-                                onClick={async () => { try { await navigator.clipboard.writeText(String(result.profile_id || '')); } catch {} }}
-                                style={{ background: '#e0f2fe', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer' }}
-                                title="Copy ID"
-                                aria-label="Copy profile ID"
-                            >
-                                Copy
+                                                    onClick={async () => { 
+                                                        try { 
+                                                            await navigator.clipboard.writeText(String(result.profile_id || '')); 
+                                                        } catch {} 
+                                                    }}
+                                                    className="p-3 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-xl transition-all duration-300 hover:scale-110 border border-blue-200"
+                                                    title="Copy Profile ID"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                    </svg>
                             </button>
                         </div>
-                        <small style={{ color: '#16a34a' }}>
-                            Save this ID to find job matches later!
-                        </small>
+                                            <div className="text-sm text-gray-500">
+                                                Save this ID for future reference and opportunity tracking
+                                            </div>
+                                        </div>
                     </div>
 
-                    <p>
-                        <strong>Message:</strong> {result.message}
+                                    <div className="space-y-6">
+                                        <p className="text-gray-700 text-center text-lg">
+                                            {result.message}
                     </p>
 
-                    {result.extracted_skills &&
-                        result.extracted_skills.length > 0 && (
+                                        {result.extracted_skills && result.extracted_skills.length > 0 && (
                             <div>
-                                <h4>Extracted Skills:</h4>
-                                <ul
-                                    style={{
-                                        columns: 2,
-                                        listStyle: 'none',
-                                        paddingLeft: 0,
-                                        color: '#064e3b'
-                                    }}
-                                >
-                                    {result.extracted_skills.map(
-                                        (skill, index) => (
-                                            <li
+                                                <h4 className="font-semibold text-gray-900 mb-4 text-center text-lg">
+                                                    Identified Professional Skills
+                                                </h4>
+                                                <div className="flex flex-wrap gap-3 justify-center">
+                                                    {result.extracted_skills.map((skill, index) => (
+                                                        <span
                                                 key={index}
-                                                style={{
-                                                    background: '#d1fae5',
-                                                    padding: '6px 10px',
-                                                    margin: '4px',
-                                                    borderRadius: '6px',
-                                                    display: 'inline-block'
-                                                }}
+                                                            className="px-4 py-2 bg-white text-gray-700 rounded-full font-medium border border-green-200 shadow-sm transition-all duration-300 hover:shadow-md"
                                             >
                                                 {skill}
-                                            </li>
-                                        )
-                                    )}
-                                </ul>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                             </div>
                         )}
+                        </div>
+                    </div>
                 </div>
-            )}
-        </div>
+            </div>
+
+            {/* Add CSS animations */}
+            <style jsx>{`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes scaleIn {
+                    from { opacity: 0; transform: scale(0.95); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+                .animate-fadeIn {
+                    animation: fadeIn 0.5s ease-out;
+                }
+                .animate-scaleIn {
+                    animation: scaleIn 0.3s ease-out;
+                }
+            `}</style>
         </div>
     );
 };
