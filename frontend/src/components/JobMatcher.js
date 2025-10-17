@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import axios from "axios";
-import PageShell from "./PageShell";
 
 const JobMatcher = () => {
   const [profileId, setProfileId] = useState("");
@@ -8,6 +7,9 @@ const JobMatcher = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [skillRecs, setSkillRecs] = useState(null);
+  const [skillRecsLoading, setSkillRecsLoading] = useState(false);
+  const [skillRecsError, setSkillRecsError] = useState(null);
 
   const findMatches = async () => {
     if (!profileId.trim()) {
@@ -24,10 +26,30 @@ const JobMatcher = () => {
         `http://localhost:8000/api/volunteers/${profileId}/matches`
       );
       setMatches(response.data.matches || []);
+      // Also fetch skill recommendations
+      fetchSkillRecommendations(profileId);
     } catch (err) {
       setError(err.response?.data?.detail || "Error finding matches");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSkillRecommendations = async (pid) => {
+    if (!pid) return;
+    setSkillRecsLoading(true);
+    setSkillRecsError(null);
+    setSkillRecs(null);
+    try {
+      const res = await axios.get(
+        `http://localhost:8000/api/recommendations/skills`,
+        { params: { profile_id: pid, limit: 8 } }
+      );
+      setSkillRecs(res.data);
+    } catch (err) {
+      setSkillRecsError(err.response?.data?.detail || 'Failed to load skill recommendations');
+    } finally {
+      setSkillRecsLoading(false);
     }
   };
 
@@ -39,11 +61,17 @@ const JobMatcher = () => {
   };
 
   return (
-    <PageShell icon="🤖" title="AI Job Matcher" subtitle="Enter a volunteer profile ID to find the best job matches">
-      <div className="max-w-5xl mx-auto">
+    <div className="px-4 py-8">
+      <div className="max-w-6xl mx-auto bg-white/80 backdrop-blur-sm border border-gray-200 shadow-lg rounded-2xl p-8">
+        <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">
+          🤖 AI Job Matcher
+        </h1>
+        <p className="text-center text-gray-500 mb-8">
+          Enter a volunteer profile ID to find the best job matches
+        </p>
 
         {/* Input Section */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch sm:items-center mb-8">
           <input
             type="text"
             value={profileId}
@@ -54,7 +82,7 @@ const JobMatcher = () => {
           <button
             onClick={findMatches}
             disabled={loading}
-            className={`px-6 py-3 rounded-xl font-semibold text-white shadow-md transition-transform transform hover:scale-105 ${
+            className={`px-6 py-3 rounded-xl font-semibold text-white shadow-md transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400 ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-indigo-600 hover:bg-indigo-700"
@@ -86,12 +114,12 @@ const JobMatcher = () => {
               {matches.length > 1 ? "es" : ""}
             </h2>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8 auto-rows-fr">
               {matches.map((match, index) => (
                 <div
                   key={index}
                   onClick={() => setSelectedJob(match.job)}
-                  className="bg-white border border-gray-200 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all cursor-pointer hover:scale-105"
+                  className="bg-white border border-gray-200 rounded-2xl p-6 shadow-md hover:shadow-lg transition-all cursor-pointer hover:scale-105 h-full flex flex-col"
                 >
                   {/* Header */}
                   <div className="flex justify-between items-start mb-4">
@@ -181,7 +209,7 @@ const JobMatcher = () => {
                     </div>
                   )}
                   
-                  <div className="mt-4 text-center">
+                  <div className="mt-auto pt-2 text-center">
                     <span className="text-xs text-blue-600 font-medium">
                       Click to view full details →
                     </span>
@@ -211,7 +239,7 @@ const JobMatcher = () => {
                 const avgScore = matches.reduce((sum, match) => sum + match.match_score, 0) / matches.length;
                 
                 return (
-                  <div className="grid md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-blue-50 rounded-lg p-4">
                       <h4 className="font-semibold text-blue-800 mb-3">
                         📊 Your Match Analysis
@@ -276,6 +304,44 @@ const JobMatcher = () => {
                   </div>
                 );
               })()}
+            </div>
+
+            {/* Skill Recommendations from Agent */}
+            <div className="bg-white border border-indigo-200 rounded-2xl p-6 shadow-md mt-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-semibold text-gray-800">🧠 Skill Recommendations</h3>
+                <button
+                  onClick={() => fetchSkillRecommendations(profileId)}
+                  disabled={skillRecsLoading || !profileId}
+                  className={`px-4 py-2 rounded-lg text-white text-sm font-semibold ${skillRecsLoading ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'} `}
+                >
+                  {skillRecsLoading ? 'Loading…' : 'Refresh'}
+                </button>
+              </div>
+
+              {skillRecsError && (
+                <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded mb-4">{skillRecsError}</div>
+              )}
+
+              {!skillRecsLoading && skillRecs && skillRecs.top_gaps && skillRecs.top_gaps.length > 0 ? (
+                <>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Analyzed {skillRecs.total_jobs_analyzed} jobs. Showing top gaps by demand.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {skillRecs.top_gaps.map((g, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-800 border border-indigo-200 px-3 py-1 rounded-full text-sm">
+                        <span className="font-medium">{g.skill}</span>
+                        <span className="text-xs bg-white text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full">{g.demand} jobs</span>
+                      </span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                !skillRecsLoading && (
+                  <p className="text-sm text-gray-500">No recommendations yet. Enter a valid profile ID and click Find Matches.</p>
+                )
+              )}
             </div>
           </div>
         )}
@@ -361,7 +427,7 @@ const JobMatcher = () => {
           </div>
         )}
       </div>
-    </PageShell>
+    </div>
   );
 };
 

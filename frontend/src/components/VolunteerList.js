@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import PageShell from './PageShell';
 
 const VolunteerList = () => {
     const [volunteers, setVolunteers] = useState(null);
@@ -45,9 +44,37 @@ const VolunteerList = () => {
     };
 
     return (
-        <PageShell icon="📋" title="CV Uploads" subtitle={JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? 'View all CV uploads from users' : 'View your CV uploads'}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-            
+        <div
+            style={{
+                maxWidth: '1000px',
+                margin: '40px auto',
+                padding: '30px',
+                background: '#ffffff',
+                borderRadius: '16px',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.08)',
+                fontFamily: 'Inter, sans-serif'
+            }}
+        >
+            <h2
+                style={{
+                    textAlign: 'center',
+                    color: '#1e293b',
+                    fontSize: '28px',
+                    marginBottom: '10px'
+                }}
+            >
+                📄 CV Uploads
+            </h2>
+            <p
+                style={{
+                    textAlign: 'center',
+                    color: '#64748b',
+                    fontSize: '15px',
+                    marginBottom: '25px'
+                }}
+            >
+                {JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? 'View all CV uploads from users' : 'View your CV uploads'} 
+            </p>
 
             <div style={{ textAlign: 'center' }}>
                 <button
@@ -471,7 +498,6 @@ const VolunteerList = () => {
                 </div>
             )}
         </div>
-        </PageShell>
     );
 };
 

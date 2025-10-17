@@ -17,7 +17,7 @@ const CVUpload = () => {
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
     const markerRef = useRef(null);
-    const [, setTempCoords] = useState(null);
+    const [tempCoords, setTempCoords] = useState(null);
     const [tempAddress, setTempAddress] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [availabilityType, setAvailabilityType] = useState('weekly');
@@ -199,7 +199,7 @@ const CVUpload = () => {
         };
 
         initMap();
-    }, [showLocationPicker, formData.location, forwardGeocode]);
+    }, [showLocationPicker]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -273,267 +273,83 @@ const CVUpload = () => {
     };
 
     return (
-        <>
-            <style>
-                {`
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                    @keyframes bounce {
-                        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-                        40% { transform: translateY(-10px); }
-                        60% { transform: translateY(-5px); }
-                    }
-                    @keyframes pulse {
-                        0%, 100% { opacity: 1; }
-                        50% { opacity: 0.5; }
-                    }
-                `}
-            </style>
-            <div
+        <div
+            style={{
+                maxWidth: '650px',
+                margin: '40px auto',
+                padding: '30px',
+                background: '#ffffff',
+                borderRadius: '16px',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.08)',
+                fontFamily: 'Inter, sans-serif'
+            }}
+        >
+            <h2
                 style={{
-                    minHeight: '100vh',
-                    background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-                    padding: '20px',
-                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
-                }}
-            >
-            <div
-                style={{
-                    maxWidth: '800px',
-                    margin: '0 auto',
-                    padding: '40px',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(20px)',
-                    borderRadius: '24px',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)'
-                }}
-            >
-                {/* Header Section */}
-                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <div
-                        style={{
-                            width: '80px',
-                            height: '80px',
-                            background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-                            borderRadius: '20px',
-                            margin: '0 auto 20px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '32px',
-                            boxShadow: '0 8px 25px rgba(37, 99, 235, 0.35)'
-                        }}
-                    >
-                        📄
-                    </div>
-                    <h1
-                        style={{
+                    textAlign: 'center',
                     color: '#1e293b',
-                            marginBottom: '8px',
-                            fontSize: '32px',
-                            fontWeight: '700',
-                            background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text'
-                        }}
-                    >
-                        Upload Your CV
-                    </h1>
-                    <p
-                        style={{
-                            color: '#64748b',
-                            fontSize: '16px',
-                            margin: '0',
-                            fontWeight: '400'
-                        }}
-                    >
-                        Create your professional profile and discover amazing volunteer opportunities
-                    </p>
-                </div>
+                    marginBottom: '25px',
+                    fontSize: '26px'
+                }}
+            >
+                📄 Upload Your CV
+            </h2>
 
             <form onSubmit={handleSubmit}>
-                {/* Personal Information Section */}
-                <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ 
-                        color: '#1e293b', 
-                        fontSize: '18px', 
-                        fontWeight: '600', 
-                        marginBottom: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}>
-                        <span style={{ 
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            borderRadius: '6px',
-                            padding: '4px 8px',
-                            fontSize: '14px'
-                        }}>👤</span>
-                        Personal Information
-                    </h3>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                        {['name', 'email'].map((field, index) => (
-                            <div key={index}>
+                {['name', 'email', 'phone', 'location'].map((field, index) => (
+                    <div key={index} style={{ marginBottom: '18px' }}>
                         <label
                             style={{
                                 display: 'block',
-                                        color: '#374151',
+                                color: '#475569',
                                 fontWeight: '600',
-                                        marginBottom: '8px',
-                                        fontSize: '14px'
+                                marginBottom: '6px'
                             }}
                         >
-                                    {field.charAt(0).toUpperCase() + field.slice(1)} *
+                            {field.charAt(0).toUpperCase() + field.slice(1)}{' '}
+                            {field === 'name' || field === 'email' ? '*' : ''}
                         </label>
+                        <div style={{ position: 'relative' }}>
                             <input
-                                    type={field === 'email' ? 'email' : 'text'}
+                                type={
+                                    field === 'email'
+                                        ? 'email'
+                                        : field === 'phone'
+                                        ? 'tel'
+                                        : 'text'
+                                }
                                 name={field}
                                 value={formData[field]}
                                 onChange={handleInputChange}
-                                    required
-                                    placeholder={field === 'email' ? 'your.email@example.com' : 'Your full name'}
+                                required={field === 'name' || field === 'email'}
+                                pattern={field === 'phone' ? '[0-9+\-\s()]\{10,15\}' : undefined}
+                                title={field === 'phone' ? 'Please enter a valid phone number (10-15 digits)' : undefined}
+                                placeholder={field === 'phone' ? '+1234567890 or 123-456-7890' : undefined}
                                 style={{
                                     width: '100%',
-                                        padding: '14px 16px',
-                                        border: '2px solid #e5e7eb',
-                                        borderRadius: '12px',
+                                    padding: field === 'location' ? '10px 64px 10px 12px' : '10px 12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '8px',
                                     fontSize: '15px',
                                     outline: 'none',
-                                        transition: 'all 0.3s ease',
-                                        background: '#fafafa',
-                                        boxSizing: 'border-box'
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = '#667eea';
-                                        e.target.style.background = '#ffffff';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = '#e5e7eb';
-                                        e.target.style.background = '#fafafa';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
-                        <div>
-                            <label
-                                style={{
-                                    display: 'block',
-                                    color: '#374151',
-                                    fontWeight: '600',
-                                    marginBottom: '8px',
-                                    fontSize: '14px'
+                                    transition: 'all 0.2s ease',
                                 }}
-                            >
-                                Phone Number
-                            </label>
-                            <input
-                                type="tel"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                pattern="[0-9+\\-\\s()]{10,15}"
-                                title="Please enter a valid phone number (10-15 digits)"
-                                placeholder="+1234567890 or 123-456-7890"
-                                style={{
-                                    width: '100%',
-                                    padding: '14px 16px',
-                                    border: '2px solid #e5e7eb',
-                                    borderRadius: '12px',
-                                    fontSize: '15px',
-                                    outline: 'none',
-                                    transition: 'all 0.3s ease',
-                                    background: '#fafafa',
-                                    boxSizing: 'border-box'
-                                }}
-                                onFocus={(e) => {
-                                    e.target.style.borderColor = '#667eea';
-                                    e.target.style.background = '#ffffff';
-                                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                }}
-                                onBlur={(e) => {
-                                    e.target.style.borderColor = '#e5e7eb';
-                                    e.target.style.background = '#fafafa';
-                                    e.target.style.boxShadow = 'none';
-                                }}
+                                onFocus={(e) =>
+                                    (e.target.style.borderColor = '#3b82f6')
+                                }
+                                onBlur={(e) =>
+                                    (e.target.style.borderColor = '#d1d5db')
+                                }
                             />
-                        </div>
-                        
-                        <div>
-                            <label
-                                style={{
-                                    display: 'block',
-                                    color: '#374151',
-                                    fontWeight: '600',
-                                    marginBottom: '8px',
-                                    fontSize: '14px'
-                                }}
-                            >
-                                Location
-                            </label>
-                            <div style={{ position: 'relative' }}>
-                                <input
-                                    type="text"
-                                    name="location"
-                                    value={formData.location}
-                                    onChange={handleInputChange}
-                                    placeholder="City, State, Country"
-                                    style={{
-                                        width: '100%',
-                                        padding: '14px 80px 14px 16px',
-                                        border: '2px solid #e5e7eb',
-                                        borderRadius: '12px',
-                                        fontSize: '15px',
-                                        outline: 'none',
-                                        transition: 'all 0.3s ease',
-                                        background: '#fafafa',
-                                        boxSizing: 'border-box'
-                                    }}
-                                    onFocus={(e) => {
-                                        e.target.style.borderColor = '#667eea';
-                                        e.target.style.background = '#ffffff';
-                                        e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                                    }}
-                                    onBlur={(e) => {
-                                        e.target.style.borderColor = '#e5e7eb';
-                                        e.target.style.background = '#fafafa';
-                                        e.target.style.boxShadow = 'none';
-                                    }}
-                                />
-                                <div style={{ 
-                                    position: 'absolute', 
-                                    right: '8px', 
-                                    top: '50%', 
-                                    transform: 'translateY(-50%)', 
-                                    display: 'flex', 
-                                    gap: '6px' 
-                                }}>
+                            {field === 'location' && (
+                                <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '6px' }}>
                                     <button
                                         type="button"
                                         aria-label="Detect my location"
                                         title="Detect my location"
                                         onClick={handleUseMyLocation}
                                         disabled={locating}
-                                        style={{ 
-                                            background: locating ? '#f3f4f6' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                            border: 'none',
-                                            color: locating ? '#9ca3af' : '#ffffff',
-                                            borderRadius: '8px',
-                                            padding: '8px 10px',
-                                            cursor: locating ? 'not-allowed' : 'pointer',
-                                            fontSize: '14px',
-                                            transition: 'all 0.2s ease',
-                                            boxShadow: locating ? 'none' : '0 2px 8px rgba(102, 126, 234, 0.3)'
-                                        }}
+                                        style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', color: '#0f172a', borderRadius: '6px', padding: '4px 6px', cursor: locating ? 'not-allowed' : 'pointer' }}
                                     >
                                         📶
                                     </button>
@@ -542,121 +358,57 @@ const CVUpload = () => {
                                         aria-label="Pick location on map"
                                         title="Pick location on map"
                                         onClick={() => { setSearchQuery(formData.location || ''); setShowLocationPicker(true); }}
-                                        style={{ 
-                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                            border: 'none',
-                                            color: '#ffffff',
-                                            borderRadius: '8px',
-                                            padding: '8px 10px',
-                                            cursor: 'pointer',
-                                            fontSize: '14px',
-                                            transition: 'all 0.2s ease',
-                                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)'
-                                        }}
+                                        style={{ background: '#e0f2fe', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '6px', padding: '4px 6px', cursor: 'pointer' }}
                                     >
                                         🗺️
                                     </button>
                                 </div>
+                            )}
                         </div>
                     </div>
-                    </div>
-                </div>
+                ))}
 
-                {/* Availability Section */}
-                <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ 
-                        color: '#1e293b', 
-                        fontSize: '18px', 
+                <div style={{ marginBottom: '20px' }}>
+                    <label
+                        style={{
+                            display: 'block',
+                            color: '#475569',
                             fontWeight: '600',
-                        marginBottom: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}>
-                        <span style={{ 
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            borderRadius: '6px',
-                            padding: '4px 8px',
-                            fontSize: '14px'
-                        }}>⏰</span>
+                            marginBottom: '10px'
+                        }}
+                    >
                         Availability *
-                    </h3>
+                    </label>
                     
                     {/* Availability Type Selection */}
-                    <div style={{ 
-                        display: 'flex', 
-                        gap: '20px', 
-                        marginBottom: '20px',
-                        background: '#f8fafc',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        border: '1px solid #e2e8f0'
-                    }}>
-                        <label style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '8px',
-                            cursor: 'pointer',
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            background: availabilityType === 'weekly' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'transparent',
-                            color: availabilityType === 'weekly' ? '#ffffff' : '#374151',
-                            transition: 'all 0.2s ease',
-                            fontWeight: '500'
-                        }}>
+                    <div style={{ marginBottom: '15px' }}>
+                        <label style={{ marginRight: '15px' }}>
                             <input
                                 type="radio"
                                 value="weekly"
                                 checked={availabilityType === 'weekly'}
                                 onChange={(e) => setAvailabilityType(e.target.value)}
-                                style={{ margin: '0' }}
+                                style={{ marginRight: '5px' }}
                             />
-                            📅 Weekly Schedule
+                            Weekly Schedule
                         </label>
-                        <label style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '8px',
-                            cursor: 'pointer',
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            background: availabilityType === 'monthly' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'transparent',
-                            color: availabilityType === 'monthly' ? '#ffffff' : '#374151',
-                            transition: 'all 0.2s ease',
-                            fontWeight: '500'
-                        }}>
+                        <label>
                             <input
                                 type="radio"
                                 value="monthly"
                                 checked={availabilityType === 'monthly'}
                                 onChange={(e) => setAvailabilityType(e.target.value)}
-                                style={{ margin: '0' }}
+                                style={{ marginRight: '5px' }}
                             />
-                            📊 Monthly Commitment
+                            Monthly Commitment
                         </label>
                     </div>
                     
-                    <div style={{ 
-                        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)', 
-                        padding: '20px', 
-                        borderRadius: '16px', 
-                        border: '2px solid #e2e8f0',
-                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)'
-                    }}>
+                    <div style={{ backgroundColor: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                         {availabilityType === 'weekly' ? (
                             // Weekly Schedule
-                            <div style={{ display: 'grid', gap: '12px' }}>
-                                {weeklyAvailability.map((day, index) => (
-                                    <div key={index} style={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: '12px',
-                                        padding: '12px',
-                                        background: day.available ? 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)' : '#ffffff',
-                                        borderRadius: '10px',
-                                        border: day.available ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-                                        transition: 'all 0.2s ease'
-                                    }}>
+                            weeklyAvailability.map((day, index) => (
+                                <div key={index} style={{ display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
                                     <input
                                         type="checkbox"
                                         checked={day.available}
@@ -665,22 +417,11 @@ const CVUpload = () => {
                                             newAvailability[index].available = e.target.checked;
                                             setWeeklyAvailability(newAvailability);
                                         }}
-                                            style={{ 
-                                                width: '18px', 
-                                                height: '18px',
-                                                accentColor: '#3b82f6'
-                                            }}
-                                        />
-                                        <span style={{ 
-                                            minWidth: '90px', 
-                                            fontSize: '14px', 
-                                            fontWeight: '600',
-                                            color: day.available ? '#1e40af' : '#374151'
-                                        }}>
-                                            {day.day}
-                                        </span>
+                                        style={{ marginRight: '8px' }}
+                                    />
+                                    <span style={{ minWidth: '80px', fontSize: '14px', fontWeight: '500' }}>{day.day}</span>
                                     {day.available && (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                                        <>
                                             <input
                                                 type="time"
                                                 value={day.startTime}
@@ -689,15 +430,9 @@ const CVUpload = () => {
                                                     newAvailability[index].startTime = e.target.value;
                                                     setWeeklyAvailability(newAvailability);
                                                 }}
-                                                    style={{ 
-                                                        padding: '6px 8px', 
-                                                        border: '1px solid #d1d5db', 
-                                                        borderRadius: '6px', 
-                                                        fontSize: '13px',
-                                                        background: '#ffffff'
-                                                    }}
-                                                />
-                                                <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500' }}>to</span>
+                                                style={{ padding: '4px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '12px' }}
+                                            />
+                                            <span style={{ fontSize: '12px' }}>to</span>
                                             <input
                                                 type="time"
                                                 value={day.endTime}
@@ -706,45 +441,21 @@ const CVUpload = () => {
                                                     newAvailability[index].endTime = e.target.value;
                                                     setWeeklyAvailability(newAvailability);
                                                 }}
-                                                    style={{ 
-                                                        padding: '6px 8px', 
-                                                        border: '1px solid #d1d5db', 
-                                                        borderRadius: '6px', 
-                                                        fontSize: '13px',
-                                                        background: '#ffffff'
-                                                    }}
-                                                />
-                                            </div>
+                                                style={{ padding: '4px', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '12px' }}
+                                            />
+                                        </>
                                     )}
                                 </div>
-                                ))}
-                            </div>
+                            ))
                         ) : (
                             // Monthly Commitment
-                            <div style={{ display: 'grid', gap: '20px' }}>
+                            <div style={{ display: 'grid', gap: '15px' }}>
                                 <div>
-                                    <label style={{ 
-                                        display: 'block', 
-                                        marginBottom: '8px', 
-                                        fontSize: '14px', 
-                                        fontWeight: '600',
-                                        color: '#374151'
-                                    }}>
-                                        Hours per week:
-                                    </label>
+                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Hours per week:</label>
                                     <select
                                         value={monthlyAvailability.hoursPerWeek}
                                         onChange={(e) => setMonthlyAvailability({...monthlyAvailability, hoursPerWeek: parseInt(e.target.value)})}
-                                        style={{ 
-                                            padding: '12px 16px', 
-                                            border: '2px solid #e5e7eb', 
-                                            borderRadius: '10px', 
-                                            width: '100%',
-                                            background: '#ffffff',
-                                            fontSize: '14px',
-                                            outline: 'none',
-                                            transition: 'all 0.2s ease'
-                                        }}
+                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
                                     >
                                         <option value={5}>5 hours/week</option>
                                         <option value={10}>10 hours/week</option>
@@ -754,28 +465,11 @@ const CVUpload = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label style={{ 
-                                        display: 'block', 
-                                        marginBottom: '8px', 
-                                        fontSize: '14px', 
-                                        fontWeight: '600',
-                                        color: '#374151'
-                                    }}>
-                                        Preferred days:
-                                    </label>
+                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Preferred days:</label>
                                     <select
                                         value={monthlyAvailability.preferredDays}
                                         onChange={(e) => setMonthlyAvailability({...monthlyAvailability, preferredDays: e.target.value})}
-                                        style={{ 
-                                            padding: '12px 16px', 
-                                            border: '2px solid #e5e7eb', 
-                                            borderRadius: '10px', 
-                                            width: '100%',
-                                            background: '#ffffff',
-                                            fontSize: '14px',
-                                            outline: 'none',
-                                            transition: 'all 0.2s ease'
-                                        }}
+                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
                                     >
                                         <option value="weekdays">Weekdays</option>
                                         <option value="weekends">Weekends</option>
@@ -783,28 +477,11 @@ const CVUpload = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label style={{ 
-                                        display: 'block', 
-                                        marginBottom: '8px', 
-                                        fontSize: '14px', 
-                                        fontWeight: '600',
-                                        color: '#374151'
-                                    }}>
-                                        Time preference:
-                                    </label>
+                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Time preference:</label>
                                     <select
                                         value={monthlyAvailability.timePreference}
                                         onChange={(e) => setMonthlyAvailability({...monthlyAvailability, timePreference: e.target.value})}
-                                        style={{ 
-                                            padding: '12px 16px', 
-                                            border: '2px solid #e5e7eb', 
-                                            borderRadius: '10px', 
-                                            width: '100%',
-                                            background: '#ffffff',
-                                            fontSize: '14px',
-                                            outline: 'none',
-                                            transition: 'all 0.2s ease'
-                                        }}
+                                        style={{ padding: '8px', border: '1px solid #d1d5db', borderRadius: '4px', width: '100%' }}
                                     >
                                         <option value="morning">Morning (9AM-12PM)</option>
                                         <option value="afternoon">Afternoon (12PM-5PM)</option>
@@ -817,103 +494,31 @@ const CVUpload = () => {
                     </div>
                 </div>
 
-                {/* CV Upload Section */}
-                <div style={{ marginBottom: '30px' }}>
-                    <h3 style={{ 
-                        color: '#1e293b', 
-                        fontSize: '18px', 
+                <div style={{ marginBottom: '20px' }}>
+                    <label
+                        style={{
+                            display: 'block',
+                            color: '#475569',
                             fontWeight: '600',
-                        marginBottom: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}>
-                        <span style={{ 
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            borderRadius: '6px',
-                            padding: '4px 8px',
-                            fontSize: '14px'
-                        }}>📁</span>
-                        CV File Upload *
-                    </h3>
-                    
-                    <div style={{
-                        border: '2px dashed #cbd5e1',
-                        borderRadius: '16px',
-                        padding: '30px',
-                        textAlign: 'center',
-                        background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
-                        transition: 'all 0.3s ease',
-                        cursor: 'pointer',
-                        position: 'relative'
-                    }}
-                    onDragOver={(e) => {
-                        e.preventDefault();
-                        e.currentTarget.style.borderColor = '#3b82f6';
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)';
-                    }}
-                    onDragLeave={(e) => {
-                        e.currentTarget.style.borderColor = '#cbd5e1';
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)';
-                    }}
-                    onClick={() => document.querySelector('input[type="file"]').click()}
+                            marginBottom: '6px'
+                        }}
                     >
-                        <div style={{
-                            fontSize: '48px',
-                            marginBottom: '16px'
-                        }}>
-                            📄
-                        </div>
-                        <h4 style={{
-                            color: '#1e40af',
-                            fontSize: '18px',
-                            fontWeight: '600',
-                            marginBottom: '8px'
-                        }}>
-                            {file ? file.name : 'Choose your CV file'}
-                        </h4>
-                        <p style={{
-                            color: '#64748b',
-                            fontSize: '14px',
-                            marginBottom: '16px'
-                        }}>
-                            Drag and drop your CV here, or click to browse
-                        </p>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            flexWrap: 'wrap'
-                        }}>
-                            {['PDF', 'DOCX', 'TXT'].map(format => (
-                                <span key={format} style={{
-                                    background: '#3b82f6',
-                                    color: '#ffffff',
-                                    padding: '4px 12px',
-                                    borderRadius: '20px',
-                                    fontSize: '12px',
-                                    fontWeight: '500'
-                                }}>
-                                    {format}
-                                </span>
-                            ))}
-                        </div>
+                        CV File (PDF, DOCX, TXT) *
+                    </label>
                     <input
                         type="file"
                         onChange={handleFileChange}
                         accept=".pdf,.docx,.txt"
                         required
                         style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
                             width: '100%',
-                                height: '100%',
-                                opacity: 0,
+                            padding: '10px',
+                            border: '1px dashed #93c5fd',
+                            backgroundColor: '#f0f9ff',
+                            borderRadius: '8px',
                             cursor: 'pointer'
                         }}
                     />
-                    </div>
                 </div>
 
                 <button
@@ -921,53 +526,24 @@ const CVUpload = () => {
                     disabled={loading}
                     style={{
                         width: '100%',
-                        background: loading 
-                            ? 'linear-gradient(135deg, #93c5fd 0%, #7c3aed 100%)' 
-                            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        backgroundColor: loading ? '#93c5fd' : '#3b82f6',
                         color: 'white',
-                        padding: '16px 0',
-                        fontSize: '18px',
-                        fontWeight: '600',
+                        padding: '12px 0',
+                        fontSize: '16px',
                         border: 'none',
-                        borderRadius: '16px',
+                        borderRadius: '10px',
                         cursor: loading ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.3s ease',
-                        boxShadow: loading 
-                            ? '0 4px 12px rgba(147, 197, 253, 0.3)' 
-                            : '0 8px 25px rgba(102, 126, 234, 0.4)',
-                        position: 'relative',
-                        overflow: 'hidden'
+                        transition: 'background 0.3s ease',
+                        boxShadow: '0 4px 12px rgba(59,130,246,0.25)'
                     }}
-                    onMouseEnter={(e) => {
-                        if (!loading) {
-                            e.target.style.transform = 'translateY(-2px)';
-                            e.target.style.boxShadow = '0 12px 35px rgba(102, 126, 234, 0.5)';
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        if (!loading) {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
-                        }
-                    }}
+                    onMouseEnter={(e) =>
+                        !loading && (e.target.style.backgroundColor = '#2563eb')
+                    }
+                    onMouseLeave={(e) =>
+                        !loading && (e.target.style.backgroundColor = '#3b82f6')
+                    }
                 >
-                    {loading ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                            <div style={{
-                                width: '20px',
-                                height: '20px',
-                                border: '2px solid rgba(255,255,255,0.3)',
-                                borderTop: '2px solid #ffffff',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite'
-                            }}></div>
-                            Processing Your CV...
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                            🚀 Upload CV & Create Profile
-                        </div>
-                    )}
+                    {loading ? 'Processing...' : '🚀 Upload CV'}
                 </button>
             </form>
 
@@ -1042,221 +618,125 @@ const CVUpload = () => {
             {error && (
                 <div
                     style={{
-                        background: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)',
+                        backgroundColor: '#fee2e2',
                         color: '#991b1b',
-                        padding: '20px',
-                        borderRadius: '16px',
-                        marginTop: '30px',
-                        border: '2px solid #f87171',
-                        textAlign: 'center',
-                        boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)'
+                        padding: '12px',
+                        borderRadius: '8px',
+                        marginTop: '20px',
+                        border: '1px solid #fecaca',
+                        textAlign: 'center'
                     }}
                 >
-                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>❌</div>
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>Upload Failed</h4>
-                    <p style={{ margin: '0', fontSize: '14px' }}>{error}</p>
+                    ❌ {error}
                 </div>
             )}
 
             {result && (
                 <div
                     style={{
-                        background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+                        backgroundColor: '#ecfdf5',
                         color: '#065f46',
-                        padding: '30px',
-                        borderRadius: '20px',
-                        marginTop: '30px',
-                        border: '2px solid #10b981',
-                        boxShadow: '0 8px 25px rgba(16, 185, 129, 0.2)',
-                        position: 'relative',
-                        overflow: 'hidden'
+                        padding: '20px',
+                        borderRadius: '12px',
+                        marginTop: '25px',
+                        border: '1px solid #a7f3d0',
+                        boxShadow: 'inset 0 0 10px rgba(16,185,129,0.1)'
                     }}
                 >
-                    {/* Success Animation Background */}
-                    <div style={{
-                        position: 'absolute',
-                        top: '-50%',
-                        right: '-50%',
-                        width: '200%',
-                        height: '200%',
-                        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)',
-                        animation: 'pulse 2s ease-in-out infinite'
-                    }}></div>
-                    
-                    <div style={{ position: 'relative', zIndex: 1 }}>
-                        <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-                            <div style={{ 
-                                fontSize: '48px', 
-                                marginBottom: '12px',
-                                animation: 'bounce 1s ease-in-out'
-                            }}>
-                                ✅
-                            </div>
                     <h3
                         style={{
-                                    margin: '0 0 8px 0',
-                                    fontSize: '24px',
-                                    fontWeight: '700',
-                                    color: '#064e3b'
-                                }}
-                            >
-                                CV Processed Successfully!
+                            marginTop: 0,
+                            marginBottom: '10px',
+                            textAlign: 'center'
+                        }}
+                    >
+                        ✅ CV Processed Successfully!
                     </h3>
-                            <p style={{ 
-                                margin: '0', 
-                                color: '#047857', 
-                                fontSize: '16px',
-                                fontWeight: '500'
-                            }}>
-                                Your profile has been created and is ready for job matching
-                            </p>
-                        </div>
 
                     <div
                         style={{
-                                background: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)',
-                                padding: '20px',
-                                borderRadius: '16px',
-                                marginBottom: '20px',
+                            backgroundColor: '#d1fae5',
+                            padding: '15px',
+                            borderRadius: '10px',
+                            marginBottom: '15px',
                             textAlign: 'center',
-                                border: '2px solid #22c55e',
-                                boxShadow: '0 4px 12px rgba(34, 197, 94, 0.15)'
+                            border: '1px solid #6ee7b7'
                         }}
                     >
                         <h4
                             style={{
-                                    margin: '0 0 12px 0',
+                                margin: 0,
                                 color: '#064e3b',
-                                    fontWeight: '600',
-                                    fontSize: '16px'
+                                fontWeight: '600'
                             }}
                         >
                             Your Unique Profile ID:
                         </h4>
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'center', 
-                                gap: '12px', 
-                                marginBottom: '8px',
-                                flexWrap: 'wrap'
-                            }}>
-                                <div
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '4px' }}>
+                            <p
                                 style={{
-                                        background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
-                                        color: '#ffffff',
-                                        padding: '8px 16px',
-                                        borderRadius: '12px',
-                                        fontSize: '18px',
+                                    margin: 0,
+                                    fontSize: '20px',
                                     fontWeight: 'bold',
                                     fontFamily: 'monospace',
-                                        letterSpacing: '1px',
-                                        boxShadow: '0 2px 8px rgba(6, 95, 70, 0.3)'
+                                    color: '#065f46'
                                 }}
                             >
                                 {result.profile_id}
-                                </div>
+                            </p>
                             <button
                                 type="button"
-                                    onClick={async (e) => { 
-                                        try { 
-                                            await navigator.clipboard.writeText(String(result.profile_id || '')); 
-                                            // Show temporary feedback
-                                            const btn = e.target;
-                                            const originalText = btn.textContent;
-                                            btn.textContent = 'Copied!';
-                                            btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                                            setTimeout(() => {
-                                                btn.textContent = originalText;
-                                                btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
-                                            }, 2000);
-                                        } catch {} 
-                                    }}
-                                    style={{ 
-                                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                        border: 'none',
-                                        color: '#ffffff',
-                                        borderRadius: '8px',
-                                        padding: '8px 16px',
-                                        cursor: 'pointer',
-                                        fontSize: '14px',
-                                        fontWeight: '500',
-                                        transition: 'all 0.2s ease',
-                                        boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
-                                    }}
+                                onClick={async () => { try { await navigator.clipboard.writeText(String(result.profile_id || '')); } catch {} }}
+                                style={{ background: '#e0f2fe', border: '1px solid #bae6fd', color: '#0369a1', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer' }}
                                 title="Copy ID"
                                 aria-label="Copy profile ID"
                             >
-                                    📋 Copy
+                                Copy
                             </button>
                         </div>
-                            <small style={{ 
-                                color: '#16a34a',
-                                fontSize: '13px',
-                                fontWeight: '500'
-                            }}>
-                                💡 Save this ID to find job matches later!
+                        <small style={{ color: '#16a34a' }}>
+                            Save this ID to find job matches later!
                         </small>
                     </div>
 
-                        <div style={{ marginBottom: '20px' }}>
-                            <p style={{ 
-                                margin: '0 0 8px 0',
-                                fontSize: '14px',
-                                color: '#047857'
-                            }}>
-                                <strong>Status:</strong> {result.message}
-                            </p>
-                        </div>
+                    <p>
+                        <strong>Message:</strong> {result.message}
+                    </p>
 
                     {result.extracted_skills &&
                         result.extracted_skills.length > 0 && (
                             <div>
-                                    <h4 style={{ 
-                                        margin: '0 0 16px 0',
-                                        color: '#064e3b',
-                                        fontSize: '16px',
-                                        fontWeight: '600',
-                                        textAlign: 'center'
-                                    }}>
-                                        🎯 AI-Detected Skills
-                                    </h4>
-                                    <div
+                                <h4>Extracted Skills:</h4>
+                                <ul
                                     style={{
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            gap: '8px',
-                                            justifyContent: 'center'
+                                        columns: 2,
+                                        listStyle: 'none',
+                                        paddingLeft: 0,
+                                        color: '#064e3b'
                                     }}
                                 >
                                     {result.extracted_skills.map(
                                         (skill, index) => (
-                                                <span
+                                            <li
                                                 key={index}
                                                 style={{
-                                                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                                        color: '#ffffff',
-                                                        padding: '6px 12px',
-                                                        borderRadius: '20px',
-                                                        fontSize: '13px',
-                                                        fontWeight: '500',
-                                                        boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)',
-                                                        transition: 'all 0.2s ease'
+                                                    background: '#d1fae5',
+                                                    padding: '6px 10px',
+                                                    margin: '4px',
+                                                    borderRadius: '6px',
+                                                    display: 'inline-block'
                                                 }}
                                             >
                                                 {skill}
-                                                </span>
+                                            </li>
                                         )
                                     )}
-                                    </div>
+                                </ul>
                             </div>
                         )}
-                    </div>
                 </div>
             )}
         </div>
-        </div>
-        </>
     );
 };
 
