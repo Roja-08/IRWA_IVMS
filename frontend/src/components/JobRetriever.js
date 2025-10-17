@@ -138,25 +138,45 @@ const JobRetriever = () => {
             <h3 className="text-2xl font-bold text-gray-800 mb-4">
               All Jobs ({jobs.length})
             </h3>
-            <div className="max-h-[60vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr items-stretch content-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr items-stretch content-start">
               {jobs.map((job, index) => (
                 <div
                   key={job._id || index}
                   onClick={() => setSelectedJob(job)}
                   className="p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all cursor-pointer hover:border-blue-300 h-full flex flex-col"
                 >
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h4
+                    className="text-lg font-semibold text-gray-900 mb-2"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      minHeight: '48px'
+                    }}
+                  >
                     {job.title || "Untitled Position"}
                   </h4>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <strong>Organization:</strong> {job.organization || "Not specified"}
-                  </p>
-                  <p className="text-sm text-gray-600 mb-2">
-                    <strong>Location:</strong> {job.location || "Not specified"}
-                  </p>
+                  <div className="space-y-1 mb-2 min-h-[40px]">
+                    <p className="text-sm text-gray-600 truncate">
+                      <strong>Organization:</strong> {job.organization || "Not specified"}
+                    </p>
+                    <p className="text-sm text-gray-600 truncate">
+                      <strong>Location:</strong> {job.location || "Not specified"}
+                    </p>
+                  </div>
                   <div className="mb-4">
-                    <p className="text-sm text-gray-600 min-h-[64px] leading-6">
-                      {job.description ? job.description.substring(0, 120) + "..." : "No description"}
+                    <p
+                      className="text-sm text-gray-600 leading-6"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 4,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: '96px'
+                      }}
+                    >
+                      {job.description ? job.description : "No description"}
                     </p>
                   </div>
                   <div className="mt-auto flex justify-between items-center pt-2">

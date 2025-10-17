@@ -44,15 +44,17 @@ const VolunteerList = () => {
     };
 
     return (
+        <div className="px-4 py-8 bg-gradient-to-br from-slate-50 via-emerald-50 to-cyan-50 min-h-[calc(100vh-120px)]">
         <div
             style={{
                 maxWidth: '1000px',
-                margin: '40px auto',
+                margin: '0 auto',
                 padding: '30px',
                 background: '#ffffff',
                 borderRadius: '16px',
-                boxShadow: '0 8px 25px rgba(0,0,0,0.08)',
-                fontFamily: 'Inter, sans-serif'
+                boxShadow: '0 16px 40px rgba(15,23,42,0.08)',
+                fontFamily: 'Inter, sans-serif',
+                border: '1px solid #e5e7eb'
             }}
         >
             <h2
@@ -80,24 +82,7 @@ const VolunteerList = () => {
                 <button
                     onClick={fetchVolunteers}
                     disabled={loading}
-                    style={{
-                        backgroundColor: loading ? '#9ae6b4' : '#10b981',
-                        color: 'white',
-                        padding: '12px 25px',
-                        border: 'none',
-                        borderRadius: '10px',
-                        fontSize: '16px',
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        transition: 'background 0.3s ease, transform 0.2s ease',
-                        boxShadow: '0 5px 15px rgba(16,185,129,0.3)',
-                        marginBottom: '30px'
-                    }}
-                    onMouseEnter={(e) =>
-                        !loading && (e.target.style.backgroundColor = '#059669')
-                    }
-                    onMouseLeave={(e) =>
-                        !loading && (e.target.style.backgroundColor = '#10b981')
-                    }
+                    className={`${loading ? 'opacity-80 cursor-not-allowed' : 'hover:shadow-lg hover:scale-[1.01]'} inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white text-base font-semibold transition-all shadow-md mb-8 bg-gradient-to-r from-emerald-600 to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400`}
                 >
                     {loading ? '⏳ Loading...' : (JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? '🔍 View All CVs' : '🔍 View My CVs')}
                 </button>
@@ -146,13 +131,13 @@ const VolunteerList = () => {
                                     border: '1px solid #e2e8f0',
                                     borderRadius: '12px',
                                     padding: '20px',
-                                    backgroundColor: '#f8fafc',
-                                    boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+                                    background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 100%)',
+                                    boxShadow: '0 8px 24px rgba(15,23,42,0.06)',
                                     transition: 'all 0.2s ease',
                                     cursor: 'pointer'
                                 }}
                                 onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(-3px)';
+                                    e.currentTarget.style.transform = 'translateY(-4px)';
                                     e.currentTarget.style.borderColor = '#3b82f6';
                                 }}
                                 onMouseLeave={(e) => {
@@ -214,23 +199,23 @@ const VolunteerList = () => {
                                                 alert('Profile ID copied to clipboard!');
                                             }}
                                             style={{
-                                                backgroundColor: '#3b82f6',
+                                                backgroundImage: 'linear-gradient(90deg, #6366f1, #3b82f6)',
                                                 color: 'white',
                                                 padding: '6px 10px',
                                                 borderRadius: '20px',
                                                 fontWeight: '600',
                                                 fontSize: '13px',
-                                                boxShadow: '0 2px 6px rgba(59,130,246,0.25)',
+                                                boxShadow: '0 6px 16px rgba(59,130,246,0.35)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.2s ease',
                                                 marginBottom: '8px'
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.target.style.backgroundColor = '#2563eb';
-                                                e.target.style.transform = 'scale(1.05)';
+                                                e.target.style.filter = 'brightness(1.05)';
+                                                e.target.style.transform = 'scale(1.04)';
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.target.style.backgroundColor = '#3b82f6';
+                                                e.target.style.filter = 'brightness(1)';
                                                 e.target.style.transform = 'scale(1)';
                                             }}
                                             title="Click to copy full Profile ID"
@@ -243,22 +228,22 @@ const VolunteerList = () => {
                                                 deleteVolunteer(volunteer.volunteer_id || volunteer._id);
                                             }}
                                             style={{
-                                                backgroundColor: '#ef4444',
+                                                backgroundImage: 'linear-gradient(90deg, #ef4444, #f97316)',
                                                 color: 'white',
                                                 padding: '6px 10px',
                                                 borderRadius: '20px',
                                                 fontWeight: '600',
                                                 fontSize: '13px',
-                                                boxShadow: '0 2px 6px rgba(239,68,68,0.25)',
+                                                boxShadow: '0 6px 16px rgba(239,68,68,0.35)',
                                                 cursor: 'pointer',
                                                 transition: 'all 0.2s ease'
                                             }}
                                             onMouseEnter={(e) => {
-                                                e.target.style.backgroundColor = '#dc2626';
-                                                e.target.style.transform = 'scale(1.05)';
+                                                e.target.style.filter = 'brightness(1.05)';
+                                                e.target.style.transform = 'scale(1.04)';
                                             }}
                                             onMouseLeave={(e) => {
-                                                e.target.style.backgroundColor = '#ef4444';
+                                                e.target.style.filter = 'brightness(1)';
                                                 e.target.style.transform = 'scale(1)';
                                             }}
                                             title="Delete volunteer profile"
@@ -371,7 +356,7 @@ const VolunteerList = () => {
                         width: '100%',
                         maxHeight: '90vh',
                         overflowY: 'auto',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+                        boxShadow: '0 30px 80px rgba(15,23,42,0.45)'
                     }}>
                         <div style={{
                             padding: '24px',
@@ -497,6 +482,7 @@ const VolunteerList = () => {
                     </div>
                 </div>
             )}
+        </div>
         </div>
     );
 };

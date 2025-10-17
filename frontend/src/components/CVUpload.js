@@ -273,15 +273,17 @@ const CVUpload = () => {
     };
 
     return (
+        <div className="px-4 py-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-[calc(100vh-120px)]">
         <div
             style={{
                 maxWidth: '650px',
-                margin: '40px auto',
+                margin: '0 auto',
                 padding: '30px',
                 background: '#ffffff',
                 borderRadius: '16px',
-                boxShadow: '0 8px 25px rgba(0,0,0,0.08)',
-                fontFamily: 'Inter, sans-serif'
+                boxShadow: '0 16px 40px rgba(15,23,42,0.08)',
+                fontFamily: 'Inter, sans-serif',
+                border: '1px solid #e5e7eb'
             }}
         >
             <h2
@@ -524,24 +526,7 @@ const CVUpload = () => {
                 <button
                     type="submit"
                     disabled={loading}
-                    style={{
-                        width: '100%',
-                        backgroundColor: loading ? '#93c5fd' : '#3b82f6',
-                        color: 'white',
-                        padding: '12px 0',
-                        fontSize: '16px',
-                        border: 'none',
-                        borderRadius: '10px',
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        transition: 'background 0.3s ease',
-                        boxShadow: '0 4px 12px rgba(59,130,246,0.25)'
-                    }}
-                    onMouseEnter={(e) =>
-                        !loading && (e.target.style.backgroundColor = '#2563eb')
-                    }
-                    onMouseLeave={(e) =>
-                        !loading && (e.target.style.backgroundColor = '#3b82f6')
-                    }
+                    className={`${loading ? 'opacity-80 cursor-not-allowed' : 'hover:shadow-lg hover:scale-[1.01]'} w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 text-base rounded-xl transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400`}
                 >
                     {loading ? 'Processing...' : '🚀 Upload CV'}
                 </button>
@@ -736,6 +721,7 @@ const CVUpload = () => {
                         )}
                 </div>
             )}
+        </div>
         </div>
     );
 };

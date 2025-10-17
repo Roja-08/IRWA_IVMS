@@ -203,7 +203,7 @@ const ProfessionalDashboard = () => {
   return (
     <Box sx={{ flexGrow: 1, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
       {/* Header */}
-      <AppBar position="static" elevation={0} sx={{ backgroundColor: '#1976d2' }}>
+      <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #0ea5e9 100%)' }}>
         <Toolbar>
           <PeopleIcon sx={{ mr: 2 }} />
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -422,17 +422,33 @@ const ProfessionalDashboard = () => {
                         <BusinessIcon />
                       </Avatar>
                       <Box flexGrow={1}>
-                        <Typography variant="h6" component="h2" gutterBottom>
+                        <Typography variant="h6" component="h2" gutterBottom sx={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          minHeight: '48px'
+                        }}>
                           {job.title}
                         </Typography>
-                        <Typography color="textSecondary" gutterBottom>
+                        <Typography color="textSecondary" gutterBottom sx={{
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
                           {job.organization}
                         </Typography>
                       </Box>
                     </Box>
 
-                    <Typography variant="body2" color="textSecondary" paragraph>
-                      {truncateText(job.description, 150)}
+                    <Typography variant="body2" color="textSecondary" paragraph sx={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 4,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      minHeight: '96px'
+                    }}>
+                      {truncateText(job.description, 300)}
                     </Typography>
 
                     {job.location && (
