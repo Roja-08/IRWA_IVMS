@@ -138,7 +138,7 @@ const JobRetriever = () => {
             <h3 className="text-2xl font-bold text-gray-800 mb-4">
               All Jobs ({jobs.length})
             </h3>
-            <div className="max-h-[60vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
+            <div className="max-h-[60vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr items-stretch content-start">
               {jobs.map((job, index) => (
                 <div
                   key={job._id || index}
@@ -154,9 +154,11 @@ const JobRetriever = () => {
                   <p className="text-sm text-gray-600 mb-2">
                     <strong>Location:</strong> {job.location || "Not specified"}
                   </p>
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                    {job.description ? job.description.substring(0, 100) + "..." : "No description"}
-                  </p>
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 min-h-[64px] leading-6">
+                      {job.description ? job.description.substring(0, 120) + "..." : "No description"}
+                    </p>
+                  </div>
                   <div className="mt-auto flex justify-between items-center pt-2">
                     <span className="text-xs text-blue-600 font-medium">Click to view details →</span>
                     <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-200">
