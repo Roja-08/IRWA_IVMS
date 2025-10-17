@@ -124,19 +124,35 @@ const JobMatcher = () => {
                   {/* Header */}
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800">
+                      <h3
+                        className="text-lg font-semibold text-gray-800 mb-1"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          minHeight: '48px'
+                        }}
+                      >
                         {match.job.title}
                       </h3>
-                      <p className="text-sm text-gray-500">
-                        <strong>Organization:</strong> {match.job.organization}
+                      <p className="text-sm text-gray-500 truncate">
+                        <strong>Organization:</strong> {match.job.organization || 'Not specified'}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Location:</strong> {match.job.location}
+                      <p className="text-sm text-gray-500 truncate">
+                        <strong>Location:</strong> {match.job.location || 'Not specified'}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        <strong>Skills:</strong>{" "}
-                        {match.job.skills_required?.join(", ") ||
-                          "Not specified"}
+                      <p
+                        className="text-sm text-gray-500"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          minHeight: '40px'
+                        }}
+                      >
+                        <strong>Skills:</strong> {match.job.skills_required?.join(', ') || 'Not specified'}
                       </p>
                     </div>
 
@@ -203,8 +219,17 @@ const JobMatcher = () => {
                       <h5 className="font-semibold text-gray-700 text-sm mb-1">
                         Description:
                       </h5>
-                      <p className="text-sm text-gray-600 leading-relaxed">
-                        {match.job.description.substring(0, 200)}...
+                      <p
+                        className="text-sm text-gray-600 leading-relaxed"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 4,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          minHeight: '96px'
+                        }}
+                      >
+                        {match.job.description}
                       </p>
                     </div>
                   )}
